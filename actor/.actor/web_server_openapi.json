@@ -1,0 +1,531 @@
+{
+    "openapi": "3.0.3",
+    "info": {
+        "title": "Watch Arbitrage MCP Server",
+        "description": "Apify Standby HTTP server exposing live cross-platform watch arbitrage data over REST and MCP (Model Context Protocol). Backed by the cached MARKET_SNAPSHOT + ARBITRAGE_OPPORTUNITIES from the most recent batch crawl. Connect any MCP-compatible AI client (Claude Desktop, Cursor, Windsurf, ChatGPT custom GPTs) and the 3 tools become callable directly. Plain HTTP clients use the `/mcp/*` REST paths.\n\n**Data freshness**: results reflect the latest scheduled batch run. If the cache is older than 60 minutes the server returns 503 with Retry-After.\n\n**Authentication**: pass your Apify API token either as `Authorization: Bearer <token>` or `?token=<token>`.",
+        "version": "0.2.0",
+        "contact": {
+            "name": "kazkn",
+            "url": "https://apify.com/kazkn/watch-arbitrage-mcp"
+        },
+        "license": {
+            "name": "ISC",
+            "url": "https://opensource.org/license/isc-license-txt"
+        }
+    },
+    "servers": [
+        {
+            "url": "https://kazkn--watch-arbitrage-mcp.apify.actor",
+            "description": "Apify Standby endpoint (production)"
+        }
+    ],
+    "tags": [
+        { "name": "Health", "description": "Service info + readiness probe." },
+        { "name": "Arbitrage", "description": "Cross-platform spread opportunities." },
+        { "name": "Market Stats", "description": "Per-reference median/min/max." },
+        { "name": "Listings", "description": "Raw paginated listings by reference." },
+        { "name": "MCP", "description": "Model Context Protocol JSON-RPC 2.0 endpoint." }
+    ],
+    "paths": {
+        "/": {
+            "get": {
+                "tags": ["Health"],
+                "summary": "Service info + readiness probe",
+                "description": "Returns service metadata. The Apify platform also probes this path with header `x-apify-container-server-readiness-probe` to mark the Actor ready to receive traffic.",
+                "responses": {
+                    "200": {
+                        "description": "Service is up.",
+                        "content": {
+                            "application/json": {
+                                "schema": { "$ref": "#/components/schemas/ServiceInfo" }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/mcp/arbitrage": {
+            "post": {
+                "tags": ["Arbitrage"],
+                "summary": "Top N current arbitrage opportunities",
+                "description": "Returns listings priced below the cross-platform median for their reference, sorted by spread % descending. Optionally filter by references and minimum spread. Charges $0.50 (`spread-alert-triggered`) per request — the value-extracting event.",
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": { "$ref": "#/components/schemas/ArbitrageRequest" },
+                            "examples": {
+                                "topTen": {
+                                    "summary": "Top 10 across all monitored refs",
+                                    "value": { "limit": 10 }
+                                },
+                                "filtered": {
+                                    "summary": "Only Patek 5711 with ≥ 8% spread",
+                                    "value": {
+                                        "references": ["5711/1A"],
+                                        "min_spread_pct": 8,
+                                        "limit": 5
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Cached arbitrage opportunities.",
+                        "content": {
+                            "application/json": {
+                                "schema": { "$ref": "#/components/schemas/ArbitrageResponse" }
+                            }
+                        }
+                    },
+                    "400": { "$ref": "#/components/responses/ValidationError" },
+                    "401": { "$ref": "#/components/responses/Unauthorized" },
+                    "503": { "$ref": "#/components/responses/CacheStale" }
+                },
+                "security": [{ "bearerAuth": [] }, { "queryToken": [] }]
+            }
+        },
+        "/mcp/market-stats": {
+            "post": {
+                "tags": ["Market Stats"],
+                "summary": "Per-reference market statistics",
+                "description": "Returns median, min, max, listing count and platforms covered per reference. Aggregate read of cached MARKET_SNAPSHOT — does not trigger a fresh crawl.",
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": { "$ref": "#/components/schemas/MarketStatsRequest" },
+                            "examples": {
+                                "all": {
+                                    "summary": "All monitored refs",
+                                    "value": {}
+                                },
+                                "specific": {
+                                    "summary": "Two specific refs",
+                                    "value": { "references": ["5711/1A", "116500LN"] }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Cached market stats.",
+                        "content": {
+                            "application/json": {
+                                "schema": { "$ref": "#/components/schemas/MarketStatsResponse" }
+                            }
+                        }
+                    },
+                    "400": { "$ref": "#/components/responses/ValidationError" },
+                    "401": { "$ref": "#/components/responses/Unauthorized" },
+                    "503": { "$ref": "#/components/responses/CacheStale" }
+                },
+                "security": [{ "bearerAuth": [] }, { "queryToken": [] }]
+            }
+        },
+        "/mcp/listings": {
+            "post": {
+                "tags": ["Listings"],
+                "summary": "Raw listings for a reference (paginated)",
+                "description": "Returns paginated listings for a single reference, optionally filtered by condition and box/papers status. Charges $0.001 per listing returned (`apify-default-dataset-item`).",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": { "$ref": "#/components/schemas/ListingsRequest" },
+                            "examples": {
+                                "fullSetOnly": {
+                                    "summary": "Patek 5711 full-set only, first 10",
+                                    "value": {
+                                        "ref": "5711/1A",
+                                        "box_papers": ["full-set"],
+                                        "limit": 10
+                                    }
+                                },
+                                "newOrLikeNew": {
+                                    "summary": "Daytona, new/like-new, paginated",
+                                    "value": {
+                                        "ref": "116500LN",
+                                        "condition": ["new", "like-new"],
+                                        "limit": 20,
+                                        "offset": 0
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Paginated listings.",
+                        "content": {
+                            "application/json": {
+                                "schema": { "$ref": "#/components/schemas/ListingsResponse" }
+                            }
+                        }
+                    },
+                    "400": { "$ref": "#/components/responses/ValidationError" },
+                    "401": { "$ref": "#/components/responses/Unauthorized" },
+                    "503": { "$ref": "#/components/responses/CacheStale" }
+                },
+                "security": [{ "bearerAuth": [] }, { "queryToken": [] }]
+            }
+        },
+        "/mcp": {
+            "post": {
+                "tags": ["MCP"],
+                "summary": "MCP JSON-RPC endpoint (Streamable HTTP)",
+                "description": "Native Model Context Protocol endpoint. Accepts JSON-RPC 2.0 requests (`initialize`, `tools/list`, `tools/call`). Tools exposed: `get_arbitrage_snapshot`, `get_market_stats`, `get_listings_by_ref`. Use this URL in Claude Desktop / Cursor / ChatGPT custom GPTs MCP config.\n\nSession-id is returned on `initialize` response and must be included on subsequent calls.",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": { "$ref": "#/components/schemas/JsonRpcRequest" },
+                            "examples": {
+                                "initialize": {
+                                    "summary": "Initialize MCP session",
+                                    "value": {
+                                        "jsonrpc": "2.0",
+                                        "id": 1,
+                                        "method": "initialize",
+                                        "params": {
+                                            "protocolVersion": "2025-03-26",
+                                            "capabilities": {},
+                                            "clientInfo": { "name": "claude-desktop", "version": "1.0" }
+                                        }
+                                    }
+                                },
+                                "toolsList": {
+                                    "summary": "List available tools",
+                                    "value": { "jsonrpc": "2.0", "id": 2, "method": "tools/list" }
+                                },
+                                "callArbitrage": {
+                                    "summary": "Call get_arbitrage_snapshot",
+                                    "value": {
+                                        "jsonrpc": "2.0",
+                                        "id": 3,
+                                        "method": "tools/call",
+                                        "params": {
+                                            "name": "get_arbitrage_snapshot",
+                                            "arguments": { "min_spread_pct": 5, "limit": 10 }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "Mcp-Session-Id",
+                        "in": "header",
+                        "required": false,
+                        "description": "Session id returned on initialize. Required for subsequent calls.",
+                        "schema": { "type": "string", "format": "uuid" }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "JSON-RPC response (single message or SSE stream).",
+                        "content": {
+                            "application/json": {
+                                "schema": { "$ref": "#/components/schemas/JsonRpcResponse" }
+                            },
+                            "text/event-stream": {
+                                "schema": {
+                                    "type": "string",
+                                    "description": "Server-sent events stream of JSON-RPC messages."
+                                }
+                            }
+                        }
+                    },
+                    "401": { "$ref": "#/components/responses/Unauthorized" }
+                },
+                "security": [{ "bearerAuth": [] }, { "queryToken": [] }]
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "scheme": "bearer",
+                "description": "Apify API token. Example: `Authorization: Bearer apify_api_xxx`."
+            },
+            "queryToken": {
+                "type": "apiKey",
+                "in": "query",
+                "name": "token",
+                "description": "Apify API token passed as `?token=apify_api_xxx`."
+            }
+        },
+        "responses": {
+            "Unauthorized": {
+                "description": "Missing or invalid Apify token.",
+                "content": {
+                    "application/json": {
+                        "schema": { "$ref": "#/components/schemas/Error" }
+                    }
+                }
+            },
+            "ValidationError": {
+                "description": "Request body failed schema validation.",
+                "content": {
+                    "application/json": {
+                        "schema": { "$ref": "#/components/schemas/Error" }
+                    }
+                }
+            },
+            "CacheStale": {
+                "description": "Cache is empty or older than 60 minutes — no fresh batch run available. Includes Retry-After header.",
+                "headers": {
+                    "Retry-After": {
+                        "description": "Seconds before the client should retry.",
+                        "schema": { "type": "integer", "example": 300 }
+                    }
+                },
+                "content": {
+                    "application/json": {
+                        "schema": { "$ref": "#/components/schemas/Error" }
+                    }
+                }
+            }
+        },
+        "schemas": {
+            "ServiceInfo": {
+                "type": "object",
+                "properties": {
+                    "service": { "type": "string", "example": "watch-arbitrage-mcp" },
+                    "version": { "type": "string", "example": "0.2.0" },
+                    "rest_endpoints": {
+                        "type": "object",
+                        "additionalProperties": { "type": "string" }
+                    },
+                    "mcp_endpoint": { "type": "string", "example": "/mcp" },
+                    "tools": {
+                        "type": "array",
+                        "items": { "type": "string" }
+                    },
+                    "cache_max_age_minutes": { "type": "integer", "example": 60 }
+                }
+            },
+            "Condition": {
+                "type": "string",
+                "enum": [
+                    "new",
+                    "like-new",
+                    "very-good",
+                    "good",
+                    "fair",
+                    "vintage",
+                    "pre-owned",
+                    "unknown"
+                ]
+            },
+            "BoxPapers": {
+                "type": "string",
+                "enum": [
+                    "full-set",
+                    "box-and-papers",
+                    "papers-only",
+                    "box-only",
+                    "watch-only",
+                    "unknown"
+                ]
+            },
+            "Brand": {
+                "type": "string",
+                "enum": ["patek-philippe", "rolex", "audemars-piguet", "unknown"]
+            },
+            "Platform": {
+                "type": "string",
+                "enum": [
+                    "chrono24",
+                    "watchbox",
+                    "bobs",
+                    "hodinkee",
+                    "watchfinder",
+                    "europeanwatch",
+                    "watchesofswitzerland"
+                ]
+            },
+            "Listing": {
+                "type": "object",
+                "properties": {
+                    "ref": { "type": "string", "example": "5711/1A" },
+                    "brand": { "$ref": "#/components/schemas/Brand" },
+                    "platform": { "$ref": "#/components/schemas/Platform" },
+                    "title": { "type": "string" },
+                    "price_usd": { "type": "number", "example": 142500 },
+                    "price_orig": { "type": "number", "example": 132000 },
+                    "currency": { "type": "string", "example": "EUR" },
+                    "listing_url": { "type": "string", "format": "uri" },
+                    "dealer": { "type": "string" },
+                    "condition": { "type": "string" },
+                    "condition_normalized": { "$ref": "#/components/schemas/Condition" },
+                    "box_papers": { "$ref": "#/components/schemas/BoxPapers" },
+                    "year": { "type": "integer", "nullable": true, "example": 2023 },
+                    "location": { "type": "string", "example": "DE" },
+                    "scraped_at": { "type": "string", "format": "date-time" }
+                }
+            },
+            "RefStats": {
+                "type": "object",
+                "properties": {
+                    "ref": { "type": "string", "example": "5711/1A" },
+                    "brand": { "$ref": "#/components/schemas/Brand" },
+                    "count": { "type": "integer", "example": 12 },
+                    "median_usd": { "type": "number", "example": 148000 },
+                    "min_usd": { "type": "number", "example": 132000 },
+                    "max_usd": { "type": "number", "example": 165000 },
+                    "platforms_covered": {
+                        "type": "array",
+                        "items": { "$ref": "#/components/schemas/Platform" }
+                    }
+                }
+            },
+            "ArbitrageOpportunity": {
+                "type": "object",
+                "properties": {
+                    "ref": { "type": "string" },
+                    "brand": { "$ref": "#/components/schemas/Brand" },
+                    "listing": { "$ref": "#/components/schemas/Listing" },
+                    "median_usd": { "type": "number" },
+                    "spread_usd": { "type": "number" },
+                    "spread_pct": { "type": "number", "example": 7.4 },
+                    "detected_at": { "type": "string", "format": "date-time" }
+                }
+            },
+            "ArbitrageRequest": {
+                "type": "object",
+                "properties": {
+                    "references": {
+                        "type": "array",
+                        "items": { "type": "string" },
+                        "description": "Optional. Restrict to these refs only. Empty = all monitored refs."
+                    },
+                    "min_spread_pct": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 100,
+                        "description": "Only return opportunities where spread_pct ≥ this value. Default 0."
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 100,
+                        "default": 10
+                    }
+                }
+            },
+            "ArbitrageResponse": {
+                "type": "object",
+                "properties": {
+                    "cached_at": { "type": "string", "format": "date-time", "nullable": true },
+                    "age_minutes": { "type": "integer", "nullable": true },
+                    "total_matched": { "type": "integer" },
+                    "opportunities": {
+                        "type": "array",
+                        "items": { "$ref": "#/components/schemas/ArbitrageOpportunity" }
+                    }
+                }
+            },
+            "MarketStatsRequest": {
+                "type": "object",
+                "properties": {
+                    "references": {
+                        "type": "array",
+                        "items": { "type": "string" }
+                    }
+                }
+            },
+            "MarketStatsResponse": {
+                "type": "object",
+                "properties": {
+                    "cached_at": { "type": "string", "format": "date-time", "nullable": true },
+                    "age_minutes": { "type": "integer", "nullable": true },
+                    "stats": {
+                        "type": "array",
+                        "items": { "$ref": "#/components/schemas/RefStats" }
+                    }
+                }
+            },
+            "ListingsRequest": {
+                "type": "object",
+                "required": ["ref"],
+                "properties": {
+                    "ref": { "type": "string", "example": "5711/1A" },
+                    "condition": {
+                        "type": "array",
+                        "items": { "$ref": "#/components/schemas/Condition" }
+                    },
+                    "box_papers": {
+                        "type": "array",
+                        "items": { "$ref": "#/components/schemas/BoxPapers" }
+                    },
+                    "limit": { "type": "integer", "minimum": 1, "maximum": 100, "default": 10 },
+                    "offset": { "type": "integer", "minimum": 0, "default": 0 }
+                }
+            },
+            "ListingsResponse": {
+                "type": "object",
+                "properties": {
+                    "cached_at": { "type": "string", "format": "date-time", "nullable": true },
+                    "age_minutes": { "type": "integer", "nullable": true },
+                    "ref": { "type": "string" },
+                    "total_matched": { "type": "integer" },
+                    "limit": { "type": "integer" },
+                    "offset": { "type": "integer" },
+                    "listings": {
+                        "type": "array",
+                        "items": { "$ref": "#/components/schemas/Listing" }
+                    }
+                }
+            },
+            "Error": {
+                "type": "object",
+                "properties": {
+                    "error": { "type": "string" },
+                    "message": { "type": "string" },
+                    "retry_after_seconds": { "type": "integer", "nullable": true }
+                }
+            },
+            "JsonRpcRequest": {
+                "type": "object",
+                "required": ["jsonrpc", "method"],
+                "properties": {
+                    "jsonrpc": { "type": "string", "enum": ["2.0"] },
+                    "id": {
+                        "oneOf": [{ "type": "integer" }, { "type": "string" }],
+                        "description": "Request ID — required for requests, omitted for notifications."
+                    },
+                    "method": { "type": "string", "example": "tools/call" },
+                    "params": { "type": "object", "additionalProperties": true }
+                }
+            },
+            "JsonRpcResponse": {
+                "type": "object",
+                "required": ["jsonrpc"],
+                "properties": {
+                    "jsonrpc": { "type": "string", "enum": ["2.0"] },
+                    "id": {
+                        "oneOf": [{ "type": "integer" }, { "type": "string" }],
+                        "nullable": true
+                    },
+                    "result": { "type": "object", "additionalProperties": true },
+                    "error": {
+                        "type": "object",
+                        "properties": {
+                            "code": { "type": "integer" },
+                            "message": { "type": "string" },
+                            "data": { "type": "object", "additionalProperties": true }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

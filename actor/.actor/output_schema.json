@@ -1,0 +1,25 @@
+{
+    "actorOutputSchemaVersion": 1,
+    "title": "Watch Arbitrage Tracker — Output",
+    "description": "Cross-platform arbitrage opportunities + market snapshot + raw listings collected across 6 marketplaces (Chrono24, WatchBox, Bobs, Watchfinder UK, European Watch, Watches of Switzerland).",
+    "properties": {
+        "arbitrageOpportunities": {
+            "type": "string",
+            "title": "🚨 Arbitrage opportunities",
+            "description": "Cross-platform spread alerts. Each entry = one listing priced below the cross-platform median for its reference. Sorted by spread % descending (biggest opportunities first). Use this to spot flips fast.",
+            "template": "{{links.apiDefaultKeyValueStoreUrl}}/records/ARBITRAGE_OPPORTUNITIES"
+        },
+        "marketSnapshot": {
+            "type": "string",
+            "title": "📊 Market snapshot per reference",
+            "description": "Per-reference statistics: median, min, max, listings count, platforms covered. Use this to understand cross-platform pricing baseline before drilling into individual listings.",
+            "template": "{{links.apiDefaultKeyValueStoreUrl}}/records/MARKET_SNAPSHOT"
+        },
+        "datasetItems": {
+            "type": "string",
+            "title": "💎 All listings (full dataset)",
+            "description": "Every individual listing collected across the 6 marketplaces. Browse, filter, sort by price, condition, year, box and papers. Export as JSON, CSV, Excel, or HTML.",
+            "template": "{{links.apiDefaultDatasetUrl}}/items"
+        }
+    }
+}

@@ -1,0 +1,25 @@
+{
+    "actorKeyValueStoreSchemaVersion": 1,
+    "title": "Watch Arbitrage Tracker — KV store",
+    "description": "Aggregated outputs: arbitrage opportunities + market snapshots.",
+    "collections": {
+        "arbitrage": {
+            "title": "Arbitrage opportunities",
+            "description": "Cross-platform spread alerts.",
+            "key": "ARBITRAGE_OPPORTUNITIES",
+            "contentTypes": ["application/json"]
+        },
+        "snapshot": {
+            "title": "Market snapshot",
+            "description": "Per-ref median/min/max/count across platforms.",
+            "key": "MARKET_SNAPSHOT",
+            "contentTypes": ["application/json"]
+        },
+        "alertHistory": {
+            "title": "Alert history (rate-limit dedup)",
+            "description": "Records last alert timestamps per ref to throttle 1×/24h.",
+            "keyPrefix": "alerthist-",
+            "contentTypes": ["application/json"]
+        }
+    }
+}

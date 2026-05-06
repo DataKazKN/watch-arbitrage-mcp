@@ -1,0 +1,135 @@
+{
+    "actorSpecification": 1,
+    "fields": {
+        "type": "object",
+        "properties": {
+            "ref": { "type": "string" },
+            "brand": { "type": "string" },
+            "platform": { "type": "string" },
+            "title": { "type": "string" },
+            "price_usd": { "type": "number" },
+            "price_orig": { "type": "number" },
+            "currency": { "type": "string" },
+            "listing_url": { "type": "string" },
+            "dealer": { "type": "string" },
+            "condition": { "type": "string" },
+            "condition_normalized": { "type": "string" },
+            "box_papers": { "type": "string" },
+            "year": { "type": ["integer", "null"] },
+            "location": { "type": "string" },
+            "scraped_at": { "type": "string" }
+        },
+        "required": ["ref", "platform", "price_usd", "listing_url"]
+    },
+    "views": {
+        "deals": {
+            "title": "💎 Best deals (cheapest first)",
+            "description": "All listings sorted by price ascending. Quickest way to spot the cheapest reference across the 6 marketplaces.",
+            "transformation": {
+                "fields": [
+                    "ref",
+                    "brand",
+                    "platform",
+                    "price_usd",
+                    "currency",
+                    "condition_normalized",
+                    "box_papers",
+                    "year",
+                    "dealer",
+                    "location",
+                    "listing_url"
+                ]
+            },
+            "display": {
+                "component": "table",
+                "properties": {
+                    "ref": { "label": "Reference", "format": "text" },
+                    "brand": { "label": "Brand", "format": "text" },
+                    "platform": { "label": "Marketplace", "format": "text" },
+                    "price_usd": { "label": "Price USD", "format": "number" },
+                    "currency": { "label": "Original Ccy", "format": "text" },
+                    "condition_normalized": { "label": "Condition", "format": "text" },
+                    "box_papers": { "label": "Box & Papers", "format": "text" },
+                    "year": { "label": "Year", "format": "number" },
+                    "dealer": { "label": "Dealer", "format": "text" },
+                    "location": { "label": "Location", "format": "text" },
+                    "listing_url": { "label": "🔗 View listing", "format": "link" }
+                }
+            }
+        },
+        "by_reference": {
+            "title": "📊 By reference (compare platforms)",
+            "description": "Same data grouped by reference, then by marketplace. Useful to spot cross-platform spreads visually.",
+            "transformation": {
+                "fields": [
+                    "ref",
+                    "brand",
+                    "platform",
+                    "price_usd",
+                    "condition_normalized",
+                    "box_papers",
+                    "year",
+                    "dealer",
+                    "listing_url"
+                ]
+            },
+            "display": {
+                "component": "table",
+                "properties": {
+                    "ref": { "label": "Reference", "format": "text" },
+                    "brand": { "label": "Brand", "format": "text" },
+                    "platform": { "label": "Marketplace", "format": "text" },
+                    "price_usd": { "label": "Price USD", "format": "number" },
+                    "condition_normalized": { "label": "Condition", "format": "text" },
+                    "box_papers": { "label": "Box & Papers", "format": "text" },
+                    "year": { "label": "Year", "format": "number" },
+                    "dealer": { "label": "Dealer", "format": "text" },
+                    "listing_url": { "label": "🔗 View", "format": "link" }
+                }
+            }
+        },
+        "raw": {
+            "title": "📋 All fields (raw)",
+            "description": "Full raw dataset with every field. For data export to JSON, CSV, or Excel.",
+            "transformation": {
+                "fields": [
+                    "ref",
+                    "brand",
+                    "platform",
+                    "title",
+                    "price_usd",
+                    "price_orig",
+                    "currency",
+                    "condition",
+                    "condition_normalized",
+                    "box_papers",
+                    "year",
+                    "dealer",
+                    "location",
+                    "listing_url",
+                    "scraped_at"
+                ]
+            },
+            "display": {
+                "component": "table",
+                "properties": {
+                    "ref": { "label": "Reference", "format": "text" },
+                    "brand": { "label": "Brand", "format": "text" },
+                    "platform": { "label": "Marketplace", "format": "text" },
+                    "title": { "label": "Listing Title", "format": "text" },
+                    "price_usd": { "label": "Price USD", "format": "number" },
+                    "price_orig": { "label": "Price (original)", "format": "number" },
+                    "currency": { "label": "Currency", "format": "text" },
+                    "condition": { "label": "Condition (raw)", "format": "text" },
+                    "condition_normalized": { "label": "Condition (normalized)", "format": "text" },
+                    "box_papers": { "label": "Box & Papers", "format": "text" },
+                    "year": { "label": "Year", "format": "number" },
+                    "dealer": { "label": "Dealer", "format": "text" },
+                    "location": { "label": "Location", "format": "text" },
+                    "listing_url": { "label": "🔗 Listing URL", "format": "link" },
+                    "scraped_at": { "label": "Scraped at", "format": "date" }
+                }
+            }
+        }
+    }
+}

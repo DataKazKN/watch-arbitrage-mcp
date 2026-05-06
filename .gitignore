@@ -1,0 +1,43 @@
+# macOS
+.DS_Store
+**/.DS_Store
+
+# IDE
+.idea/
+.vscode/
+.zed/
+
+# Node / build
+node_modules/
+dist/
+*.tsbuildinfo
+
+# Apify storage (local-only emulation)
+apify_storage/
+storage/
+**/storage/
+**/apify_storage/
+
+# Apify CLI auth (NEVER commit)
+.apify/
+**/.apify/
+auth.json
+
+# Secrets — never commit
+.env
+.env.*
+*.secret
+*.pem
+
+# Python
+__pycache__/
+.venv/
+*.pyc
+
+# Logs
+*.log
+logs/
+
+# Temp
+.tmp/
+.cache/

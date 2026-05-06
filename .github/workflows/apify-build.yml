@@ -1,0 +1,59 @@
+# Continuous integration for the kazkn/watch-arbitrage-mcp Apify Actor.
+#
+# Per Apify's recommended pattern documented at
+# https://docs.apify.com/platform/actors/development/deployment/continuous-integration
+#
+# On push to `main`, this workflow:
+#   1. Installs deps and runs the unit test suite locally on GitHub runners
+#   2. Triggers an Apify Cloud build of the Actor's `latest` tag via webhook
+#
+# Required GitHub repository secrets:
+#   - APIFY_TOKEN              : your Apify API token (Apify Console → Settings → Integrations)
+#   - BUILD_ACTOR_URL          : the "Build Actor" API endpoint URL
+#                                (Console → your Actor → API → API Endpoints → Build Actor)
+#                                Format: https://api.apify.com/v2/acts/USER~ACTOR/builds?token=...&version=0.0&tag=latest
+#
+# To set them:
+#   GitHub repo → Settings → Secrets and variables → Actions → New repository secret
+
+name: Test and build (latest)
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    name: Lint + unit tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: actor
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+          cache-dependency-path: actor/package-lock.json
+      - run: npm ci
+      - run: npx tsc --noEmit
+      - run: npm test --if-present
+
+  build:
+    name: Trigger Apify Cloud build
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    steps:
+      - uses: actions/checkout@v4
+      - name: Trigger Apify build webhook
+        uses: distributhor/workflow-webhook@v3
+        env:
+          webhook_url: ${{ secrets.BUILD_ACTOR_URL }}
+          webhook_secret: ${{ secrets.APIFY_TOKEN }}
