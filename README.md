@@ -1,6 +1,6 @@
-# Watch Arbitrage Tracker — Patek/Rolex/AP Cross-Platform Alerts
+# Watch Arbitrage Tracker — Rolex/Patek/AP Cross-Platform Alerts
 
-> **Apify Actor source code.** A cross-platform price arbitrage tracker for professional watch dealers trading Patek Philippe, Rolex, and Audemars Piguet across **Chrono24**, **WatchBox / The 1916 Company**, **Bobs Watches**, **Watchfinder UK**, **European Watch Co**, and **Watches of Switzerland**. Real-time Telegram alerts when a listing is mispriced cross-platform. Doubles as an MCP server for AI agents.
+> **Apify Actor source code.** A cross-platform price arbitrage tracker for professional watch dealers trading Rolex, Patek Philippe, and Audemars Piguet across **Chrono24**, **The 1916 Company** (formerly WatchBox), **Bob's Watches**, **Watchfinder**, **European Watch Company**, and **Watches of Switzerland**. Real-time Telegram alerts when a listing is mispriced versus the cross-platform median. Doubles as an MCP server for AI agents.
 
 [**▶ Try it on Apify Store**](https://apify.com/kazkn/watch-arbitrage-mcp) — runs in the cloud, free tier sufficient for most dealers.
 

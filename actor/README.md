@@ -1,8 +1,8 @@
-# Watch Arbitrage Tracker (Patek/Rolex/AP)
+# Watch Arbitrage Tracker — Rolex/Patek/AP Cross-Platform Alerts
 
-![Watch Arbitrage Tracker — Spot mispriced Patek, Rolex & AP across 6 marketplaces](https://raw.githubusercontent.com/DataKazKN/watch-arbitrage-mcp/main/actor/assets/screenshots/01-hero.png)
+![Watch Arbitrage Tracker — Spot mispriced Rolex, Patek & AP across 6 marketplaces](https://raw.githubusercontent.com/DataKazKN/watch-arbitrage-mcp/main/actor/assets/screenshots/01-hero.png)
 
-> Cross-platform price arbitrage tool for **professional watch dealers** trading **Patek Philippe**, **Rolex**, and **Audemars Piguet (AP)** across **Chrono24**, **WatchBox** (now part of **The 1916 Company** — the 2024 merger of WatchBox + **Govberg Jewelers** + **Hyde Park Jewelers**), **Bobs Watches**, **Watchfinder UK**, **European Watch Co (Boston)**, and **Watches of Switzerland (Mayors / Mappin & Webb / Goldsmiths group)**. **Real-time Telegram alerts** when a listing is mispriced cross-platform.
+> Cross-platform price arbitrage tool for **professional watch dealers** trading **Rolex**, **Patek Philippe**, and **Audemars Piguet (AP)** across **Chrono24**, **The 1916 Company** (the 2024 merger of **WatchBox** + **Govberg Jewelers** + **Hyde Park Jewelers**), **Bob's Watches**, **Watchfinder** (Richemont Group), **European Watch Company (Boston)**, and **Watches of Switzerland** (Mayors / Mappin & Webb / Goldsmiths group). **Real-time Telegram alerts** when a listing is mispriced versus the cross-platform median.
 
 ## What does Watch Arbitrage Tracker do?
 
@@ -15,10 +15,10 @@ It runs on **Apify proxy + Camoufox** (a stealthy Firefox fork) so Cloudflare-pr
 | Source | Status | Notes |
 |---|---|---|
 | **Chrono24** | ✅ Confirmed delivering listings | Largest global marketplace; widest variance — most arbitrage signals come from here |
-| **WatchBox / The 1916 Company** | ✅ Confirmed delivering listings | Premium US dealer (ex-Govberg + ex-Hyde Park merger 2024). Domain: `the1916company.com` (legacy `watchbox.com` redirects) |
-| **Bobs Watches** | ✅ Confirmed delivering listings | Rolex specialist, Newport Beach CA. Cloudflare-protected — Camoufox handles |
-| **Watchfinder UK** | ✅ Confirmed delivering listings | UK leader (Richemont Group). Cross-platform median signal validated |
-| European Watch Co (Boston) | ⚠️ Discovery in progress (v0.2) | 69+ Patek inventory verified but ref-grid filter calibration ongoing |
+| **The 1916 Company** | ✅ Confirmed delivering listings | Premium US dealer (2024 merger of WatchBox + Govberg + Hyde Park). Domain: `the1916company.com` (legacy `watchbox.com` redirects) |
+| **Bob's Watches** | ✅ Confirmed delivering listings | Rolex specialist, Newport Beach CA. Cloudflare-protected — Camoufox handles |
+| **Watchfinder** | ✅ Confirmed delivering listings | UK leader (Richemont Group). Cross-platform median signal validated |
+| European Watch Company (Boston) | ⚠️ Discovery in progress (v0.2) | 69+ Patek inventory verified but ref-grid filter calibration ongoing |
 | Watches of Switzerland | ⚠️ Discovery in progress (v0.2) | Patek pricing hidden ("price on request"); Rolex/AP works when in stock |
 
 **4 platforms confirmed delivering cross-platform median signals** as of build 0.1.19. The 2 remaining sources are wired and run on every scheduled batch — when they return inventory matching your refs, listings flow into the dataset automatically.

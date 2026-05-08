@@ -2,8 +2,8 @@
 	"$schema": "https://apify.com/schemas/v1/actor.ide.json",
 	"actorSpecification": 1,
 	"name": "watch-arbitrage-mcp",
-	"title": "Watch Arbitrage Tracker (Patek/Rolex/AP)",
-	"description": "Cross-platform price arbitrage tracker for pro watch dealers. Monitors Patek Philippe, Rolex, Audemars Piguet across 6 platforms (Chrono24, WatchBox/1916, Bobs Watches, Watchfinder UK, European Watch Co, Watches of Switzerland). Telegram + email alerts on >5% spreads.",
+	"title": "Watch Arbitrage Tracker — Rolex/Patek/AP Cross-Platform Alerts",
+	"description": "Cross-platform watch arbitrage for pro dealers. Tracks Rolex, Patek Philippe, Audemars Piguet across 6 marketplaces: Chrono24, The 1916 Company, Bob's Watches, Watchfinder, European Watch Company, Watches of Switzerland. Telegram alerts on >5% spreads vs trimmed cross-platform median. Pay-Per-Event.",
 	"version": "0.1",
 	"meta": {
 		"templateId": "ts-crawlee-playwright-camoufox",
