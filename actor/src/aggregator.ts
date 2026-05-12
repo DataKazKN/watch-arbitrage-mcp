@@ -11,7 +11,7 @@
  * 1 outlier $200K listing on Hodinkee shouldn't move the threshold for
  * everybody else.
  */
-import type { ArbitrageOpportunity, BoxPapersStatus, Listing, Platform, RefStats, WatchCondition } from './types.js';
+import type { ArbitrageOpportunity, BoxPapersStatus, Listing, Platform, PriceCeiling, RefStats, WatchCondition } from './types.js';
 import { detectBrand } from './utils/brand.js';
 
 /** Normalize raw condition string from crawlers into the v2 enum. */
@@ -217,13 +217,34 @@ export function aggregate(listings: Listing[]): {
     return { stats, opportunities: [] };
 }
 
+/**
+ * Build a lookup map from a list of per-reference price ceilings. Keys are
+ * normalised (uppercase, whitespace-stripped) to match how sub-refs come
+ * out of {@link extractSubRef}. Empty/invalid rows are dropped.
+ */
+export function buildPriceCeilingMap(ceilings: PriceCeiling[] | undefined): Map<string, number> {
+    const map = new Map<string, number>();
+    if (!ceilings) return map;
+    for (const c of ceilings) {
+        const key = (c?.reference ?? '').replace(/\s+/g, '').toUpperCase();
+        const value = Number(c?.max_price_usd);
+        if (!key || !Number.isFinite(value) || value <= 0) continue;
+        map.set(key, value);
+    }
+    return map;
+}
+
 export function detectOpportunities(
     listings: Listing[],
     stats: RefStats[],
     minSpreadPct: number,
+    priceCeilings: PriceCeiling[] | Map<string, number> = [],
 ): ArbitrageOpportunity[] {
     // stats are keyed by SUB-REF (Bug #5 fix). Match each listing to its sub-ref.
     const statsByRef = new Map(stats.map((s) => [s.ref, s]));
+    const ceilingMap = priceCeilings instanceof Map
+        ? priceCeilings
+        : buildPriceCeilingMap(priceCeilings);
     const opportunities: ArbitrageOpportunity[] = [];
     const now = new Date().toISOString();
 
@@ -231,26 +252,48 @@ export function detectOpportunities(
         const subRef = extractSubRef(l.title, l.brand) ?? (isPreciseRef(l.ref) ? l.ref.toUpperCase() : null);
         if (!subRef) continue; // listing has no detectable sub-ref → skip arbitrage check
 
+        const ceiling = ceilingMap.get(subRef);
         const s = statsByRef.get(subRef);
-        if (!s || s.count < 2) continue; // need at least 2 same sub-ref listings
 
-        const threshold = s.median_usd * (1 - minSpreadPct / 100);
-        if (l.price_usd >= threshold) continue;
+        let anchor: number;
+        let usedCeiling: boolean;
+        if (ceiling) {
+            // User-defined per-reference ceiling overrides the median anchor.
+            // We still record stats.median_usd for the dataset, but the alert
+            // fires when ANY listing is below the ceiling — regardless of where
+            // the platform median sits that day.
+            anchor = ceiling;
+            usedCeiling = true;
+        } else {
+            // Fall back to the cross-platform median anchor (default behavior).
+            if (!s || s.count < 2) continue; // need at least 2 same sub-ref listings
+            anchor = s.median_usd * (1 - minSpreadPct / 100);
+            usedCeiling = false;
+        }
 
-        // Bug #3 fix: skip listings priced suspiciously low relative to median —
-        // typically wrong-watch matches (different model with similar ref number),
-        // typos, or scams. Real arbitrage rarely exceeds 70% spread on listed prices.
+        if (l.price_usd >= anchor) continue;
+
+        // Bug #3 fix: skip listings priced suspiciously low relative to the
+        // anchor — typically wrong-watch matches (different model with similar
+        // ref number), typos, or scams. Real arbitrage rarely exceeds 70%
+        // spread on listed prices. We apply this floor against whichever
+        // anchor is active (median or user-supplied ceiling).
         const MIN_PRICE_FLOOR_PCT = 0.3;
-        if (l.price_usd < s.median_usd * MIN_PRICE_FLOOR_PCT) continue;
+        const baseForFloor = usedCeiling ? ceiling! : s!.median_usd;
+        if (l.price_usd < baseForFloor * MIN_PRICE_FLOOR_PCT) continue;
 
-        const spread_usd = Math.round(s.median_usd - l.price_usd);
-        const spread_pct = Math.round(((s.median_usd - l.price_usd) / s.median_usd) * 1000) / 10;
+        const referenceMedian = s?.median_usd ?? 0;
+        const spreadBase = usedCeiling ? ceiling! : referenceMedian;
+        const spread_usd = Math.round(spreadBase - l.price_usd);
+        const spread_pct = spreadBase > 0
+            ? Math.round(((spreadBase - l.price_usd) / spreadBase) * 1000) / 10
+            : 0;
 
         opportunities.push({
             ref: subRef,
             brand: l.brand,
             listing: l,
-            median_usd: s.median_usd,
+            median_usd: referenceMedian,
             spread_usd,
             spread_pct,
             detected_at: now,

@@ -16,10 +16,20 @@ export type Brand = 'patek-philippe' | 'rolex' | 'audemars-piguet' | 'unknown';
 export type WatchCondition = 'new' | 'like-new' | 'very-good' | 'good' | 'fair' | 'vintage' | 'pre-owned' | 'unknown';
 export type BoxPapersStatus = 'full-set' | 'box-and-papers' | 'papers-only' | 'box-only' | 'watch-only' | 'unknown';
 
+export interface PriceCeiling {
+    reference: string;
+    max_price_usd: number;
+}
+
 export interface ActorInput {
     references: string[];
     platforms: Platform[];
-    spread_sensitivity?: string;
+    /** Integer % between 1 and 50 (default 5). Overridden by spread_sensitivity_decimal when present. */
+    spread_sensitivity?: number | string;
+    /** Optional decimal % override (e.g. "4.5"). Empty string means use spread_sensitivity. */
+    spread_sensitivity_decimal?: string;
+    /** Per-reference price ceilings — overrides the median anchor for these refs only. */
+    price_ceilings?: PriceCeiling[];
     alert_channel?: 'telegram' | 'email' | 'both' | 'dataset_only';
     max_listings_per_ref_per_platform: number;
     alert_telegram_bot_token?: string;

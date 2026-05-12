@@ -67,7 +67,20 @@ async function runBatch(): Promise<void> {
     const platforms: Platform[] = input.platforms?.length
         ? input.platforms
         : ['chrono24', 'watchbox', 'bobs', 'watchfinder', 'europeanwatch', 'watchesofswitzerland'];
-    const minSpreadPct = parseInt(input.spread_sensitivity ?? '5', 10);
+    // ---- Spread sensitivity: integer field + optional decimal override ----
+    // The input schema accepts an integer (1-50) plus an optional textfield
+    // for sub-integer precision (e.g. "4.5"). When the decimal field is non-
+    // empty AND parses as a finite number, it wins. Otherwise we fall back to
+    // the integer field. We clamp to [0.5, 50] so 0 or runaway values don't
+    // produce silly thresholds.
+    const decimalRaw = (input.spread_sensitivity_decimal ?? '').toString().trim();
+    const decimalValue = decimalRaw === '' ? NaN : Number.parseFloat(decimalRaw);
+    const integerValue = Number.parseFloat(String(input.spread_sensitivity ?? '5'));
+    const rawSpread = Number.isFinite(decimalValue) ? decimalValue : integerValue;
+    const minSpreadPct = Math.min(50, Math.max(0.5, Number.isFinite(rawSpread) ? rawSpread : 5));
+
+    // ---- Per-reference price ceilings (override median anchor for listed refs) ----
+    const priceCeilings = input.price_ceilings ?? [];
     const maxListingsPerRefPerPlatform = input.max_listings_per_ref_per_platform ?? 25;
 
     if (references.length === 0) {
@@ -79,6 +92,8 @@ async function runBatch(): Promise<void> {
         references_count: references.length,
         platforms,
         min_spread_pct: minSpreadPct,
+        price_ceilings_count: priceCeilings.length,
+        spread_decimal_override_used: Number.isFinite(decimalValue),
     });
 
     // Charge actor-start + check spending limit (respect ACTOR_MAX_TOTAL_CHARGE_USD).
@@ -207,7 +222,7 @@ async function runBatch(): Promise<void> {
 
     // --- Aggregate + detect spreads on FILTERED listings ---
     const { stats } = aggregate(filtered);
-    const opportunities = detectOpportunities(filtered, stats, minSpreadPct);
+    const opportunities = detectOpportunities(filtered, stats, minSpreadPct, priceCeilings);
 
     await Actor.setValue('MARKET_SNAPSHOT', stats);
     await Actor.setValue('ARBITRAGE_OPPORTUNITIES', opportunities);

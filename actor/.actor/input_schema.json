@@ -24,20 +24,22 @@
         },
 
         "spread_sensitivity": {
-            "title": "2️⃣ How aggressive should the alerts be?",
+            "title": "2️⃣ How aggressive should the alerts be? (% — your choice, 0.5 to 50)",
+            "type": "integer",
+            "description": "Triggers an alert when a listing is BELOW the cross-platform median (or below your per-reference ceiling — see Advanced section) by at least this %. Pick ANY value between 0.5 and 50 — no presets. Lower = more alerts (some noise). Higher = only big opportunities.\n\nReference: 3% = chatty volume flippers, 5% = recommended default, 8% = selective, 10%+ = once-in-a-week, 15%+ = once-in-a-month. The actor accepts the EXACT number you enter — '4.5' fires alerts at 4.5% spread, not rounded to 5%.",
+            "editor": "number",
+            "default": 5,
+            "minimum": 1,
+            "maximum": 50,
+            "unit": "%"
+        },
+
+        "spread_sensitivity_decimal": {
+            "title": "Fine-tune sensitivity (decimal % — 0.5 to 50)",
             "type": "string",
-            "description": "Triggers an alert when a listing is BELOW the cross-platform median by at least this %. Lower = more alerts (some noise). Higher = only big opportunities.",
-            "editor": "select",
-            "default": "5",
-            "enum": ["3", "5", "8", "10", "15", "20"],
-            "enumTitles": [
-                "3% — every small spread (chatty, dealers who flip volume)",
-                "5% — recommended default (good signal/noise ratio)",
-                "8% — selective (only meaningful spreads)",
-                "10% — only big opportunities",
-                "15% — flip-of-the-week tier",
-                "20% — once-in-a-month deals only"
-            ]
+            "description": "OPTIONAL. If you want sub-integer precision (e.g. '4.5', '7.25', '2.5'), enter it here and it overrides the integer above. Accepted format: a decimal number like '4.5' or '7.25'. Leave blank to use the integer setting.",
+            "editor": "textfield",
+            "default": ""
         },
 
         "alert_channel": {
@@ -190,6 +192,24 @@
             ],
             "sectionCaption": "⚙️ Advanced options (everything below is optional — skip if first-time)",
             "sectionDescription": "Defaults work great for most dealers. Tweak only if you have a specific need."
+        },
+
+        "price_ceilings": {
+            "title": "Per-reference price ceilings (override the median anchor)",
+            "type": "array",
+            "description": "🎯 For dealers who already have a TARGET INTAKE PRICE per reference and don't want the cross-platform median to decide what's a deal. List one row per reference with the max USD price you'd consider a deal.\n\nExample: { reference: '5711/1A-010', max_price_usd: 185000 } means 'alert me when ANY platform lists 5711/1A-010 below $185000', regardless of where the median sits that day.\n\nLEAVE EMPTY to keep the default median-anchored behavior. Mix-and-match supported: refs you list here use your ceiling; refs you don't list use the median anchor.",
+            "editor": "json",
+            "prefill": [
+                {
+                    "reference": "5711/1A-010",
+                    "max_price_usd": 185000
+                },
+                {
+                    "reference": "116500LN",
+                    "max_price_usd": 28000
+                }
+            ],
+            "default": []
         },
 
         "max_listings_per_ref_per_platform": {
