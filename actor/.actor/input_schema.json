@@ -195,19 +195,16 @@
         },
 
         "price_ceilings": {
-            "title": "Per-reference price ceilings (override the median anchor)",
+            "title": "🎯 Per-reference price ceilings (optional — override the median anchor)",
             "type": "array",
-            "description": "🎯 For dealers who already have a TARGET INTAKE PRICE per reference and don't want the cross-platform median to decide what's a deal. List one row per reference with the max USD price you'd consider a deal.\n\nExample: { reference: '5711/1A-010', max_price_usd: 185000 } means 'alert me when ANY platform lists 5711/1A-010 below $185000', regardless of where the median sits that day.\n\nLEAVE EMPTY to keep the default median-anchored behavior. Mix-and-match supported: refs you list here use your ceiling; refs you don't list use the median anchor.",
-            "editor": "json",
+            "description": "Set YOUR OWN target intake price per reference, in USD. The alert then fires when ANY platform lists that reference below your ceiling — instead of using the cross-platform median as the anchor.\n\n📝 FORMAT: one row per reference, written as `reference:max_price_usd`. No spaces around the colon. Examples:\n  • `5711/1A-010:185000` → alert when 5711/1A-010 is listed below $185,000\n  • `116500LN:28000` → alert when 116500LN is listed below $28,000\n  • `124060:13500` → alert when 124060 is listed below $13,500\n\n💡 LEAVE EMPTY to keep the default median-anchored behavior for every reference. Mix-and-match supported: refs you list use your ceiling; refs you don't list use the median anchor. Invalid rows (missing colon, non-numeric price, price ≤ 0) are silently skipped — bad rows won't crash the run.",
+            "editor": "stringList",
+            "items": {
+                "type": "string"
+            },
             "prefill": [
-                {
-                    "reference": "5711/1A-010",
-                    "max_price_usd": 185000
-                },
-                {
-                    "reference": "116500LN",
-                    "max_price_usd": 28000
-                }
+                "5711/1A-010:185000",
+                "116500LN:28000"
             ],
             "default": []
         },

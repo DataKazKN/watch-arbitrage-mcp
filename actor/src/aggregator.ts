@@ -11,7 +11,7 @@
  * 1 outlier $200K listing on Hodinkee shouldn't move the threshold for
  * everybody else.
  */
-import type { ArbitrageOpportunity, BoxPapersStatus, Listing, Platform, PriceCeiling, RefStats, WatchCondition } from './types.js';
+import type { ArbitrageOpportunity, BoxPapersStatus, Listing, Platform, PriceCeiling, PriceCeilingInput, RefStats, WatchCondition } from './types.js';
 import { detectBrand } from './utils/brand.js';
 
 /** Normalize raw condition string from crawlers into the v2 enum. */
@@ -218,18 +218,77 @@ export function aggregate(listings: Listing[]): {
 }
 
 /**
+ * Parse one ``"reference:max_price_usd"`` string into a {@link PriceCeiling}.
+ *
+ * Tolerant: trims, accepts multiple separators (``:``, ``=``, ``->``,
+ * ``|``), accepts thousands separators in the price ("185,000", "$185 000",
+ * "185k", "1.5M"). Returns ``null`` for unparseable rows so the caller
+ * can silently skip bad entries without crashing the actor run.
+ */
+function parsePriceCeilingString(row: string): PriceCeiling | null {
+    if (!row || typeof row !== 'string') return null;
+    const cleaned = row.trim();
+    if (!cleaned) return null;
+
+    // Split on the first occurrence of any recognized separator
+    const sepMatch = cleaned.match(/^(.+?)\s*(?::|=>|=|->|\|)\s*(.+)$/);
+    if (!sepMatch) return null;
+    const refRaw = sepMatch[1];
+    const priceRaw = sepMatch[2];
+    const reference = refRaw.replace(/\s+/g, '').toUpperCase();
+    if (!reference) return null;
+
+    // Strip currency symbols, commas, whitespace from the price side
+    let priceStr = priceRaw.replace(/[\s$,€£¥]/g, '');
+    // Handle "185k" / "1.5M" shorthand for dealer-friendly typing
+    let multiplier = 1;
+    const tail = priceStr.slice(-1).toLowerCase();
+    if (tail === 'k') {
+        multiplier = 1_000;
+        priceStr = priceStr.slice(0, -1);
+    } else if (tail === 'm') {
+        multiplier = 1_000_000;
+        priceStr = priceStr.slice(0, -1);
+    }
+    const value = Number.parseFloat(priceStr) * multiplier;
+    if (!Number.isFinite(value) || value <= 0) return null;
+
+    return { reference, max_price_usd: Math.round(value) };
+}
+
+/**
  * Build a lookup map from a list of per-reference price ceilings. Keys are
  * normalised (uppercase, whitespace-stripped) to match how sub-refs come
- * out of {@link extractSubRef}. Empty/invalid rows are dropped.
+ * out of {@link extractSubRef}.
+ *
+ * Accepts BOTH input shapes:
+ * - ``"ref:price"`` strings (current user-facing format).
+ * - ``{reference, max_price_usd}`` objects (legacy JSON-editor format).
+ *
+ * Empty / unparseable rows are silently skipped — a bad row should not
+ * crash the actor run.
  */
-export function buildPriceCeilingMap(ceilings: PriceCeiling[] | undefined): Map<string, number> {
+export function buildPriceCeilingMap(
+    ceilings: PriceCeilingInput[] | undefined,
+): Map<string, number> {
     const map = new Map<string, number>();
     if (!ceilings) return map;
-    for (const c of ceilings) {
-        const key = (c?.reference ?? '').replace(/\s+/g, '').toUpperCase();
-        const value = Number(c?.max_price_usd);
-        if (!key || !Number.isFinite(value) || value <= 0) continue;
-        map.set(key, value);
+    for (const raw of ceilings) {
+        let parsed: PriceCeiling | null;
+        if (typeof raw === 'string') {
+            parsed = parsePriceCeilingString(raw);
+        } else if (raw && typeof raw === 'object') {
+            const key = (raw.reference ?? '').replace(/\s+/g, '').toUpperCase();
+            const value = Number(raw.max_price_usd);
+            parsed = key && Number.isFinite(value) && value > 0
+                ? { reference: key, max_price_usd: Math.round(value) }
+                : null;
+        } else {
+            parsed = null;
+        }
+        if (parsed) {
+            map.set(parsed.reference, parsed.max_price_usd);
+        }
     }
     return map;
 }
@@ -238,7 +297,7 @@ export function detectOpportunities(
     listings: Listing[],
     stats: RefStats[],
     minSpreadPct: number,
-    priceCeilings: PriceCeiling[] | Map<string, number> = [],
+    priceCeilings: PriceCeilingInput[] | Map<string, number> = [],
 ): ArbitrageOpportunity[] {
     // stats are keyed by SUB-REF (Bug #5 fix). Match each listing to its sub-ref.
     const statsByRef = new Map(stats.map((s) => [s.ref, s]));

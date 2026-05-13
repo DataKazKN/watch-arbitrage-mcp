@@ -21,6 +21,15 @@ export interface PriceCeiling {
     max_price_usd: number;
 }
 
+/**
+ * Raw input shape for price ceilings. The user-facing input schema
+ * uses ``editor: stringList`` so the operator types one "ref:price"
+ * pair per row (e.g. ``"5711/1A-010:185000"``). We also accept the
+ * legacy object-array shape (``{reference, max_price_usd}[]``) for
+ * back-compat with runs already configured with the JSON editor.
+ */
+export type PriceCeilingInput = string | PriceCeiling;
+
 export interface ActorInput {
     references: string[];
     platforms: Platform[];
@@ -28,8 +37,10 @@ export interface ActorInput {
     spread_sensitivity?: number | string;
     /** Optional decimal % override (e.g. "4.5"). Empty string means use spread_sensitivity. */
     spread_sensitivity_decimal?: string;
-    /** Per-reference price ceilings — overrides the median anchor for these refs only. */
-    price_ceilings?: PriceCeiling[];
+    /** Per-reference price ceilings — overrides the median anchor for these refs only.
+     *  Accepts either "ref:price" strings (current UI) or {reference, max_price_usd}
+     *  objects (legacy JSON-editor shape). */
+    price_ceilings?: PriceCeilingInput[];
     alert_channel?: 'telegram' | 'email' | 'both' | 'dataset_only';
     max_listings_per_ref_per_platform: number;
     alert_telegram_bot_token?: string;
