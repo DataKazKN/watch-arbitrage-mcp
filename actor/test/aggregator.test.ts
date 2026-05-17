@@ -16,10 +16,7 @@
  */
 import { describe, expect, it } from 'vitest';
 
-import {
-    buildPriceCeilingMap,
-    detectOpportunities,
-} from '../src/aggregator.js';
+import { buildPriceCeilingMap, detectOpportunities } from '../src/aggregator.js';
 import type { Listing, RefStats } from '../src/types.js';
 
 function makeListing(overrides: Partial<Listing> = {}): Listing {
@@ -67,43 +64,28 @@ describe('buildPriceCeilingMap', () => {
     });
 
     it('accepts alternative separators (=, ->, |)', () => {
-        const map = buildPriceCeilingMap([
-            '5711/1A-010=185000',
-            '116500LN->28000',
-            '124060|13500',
-        ]);
+        const map = buildPriceCeilingMap(['5711/1A-010=185000', '116500LN->28000', '124060|13500']);
         expect(map.get('5711/1A-010')).toBe(185000);
         expect(map.get('116500LN')).toBe(28000);
         expect(map.get('124060')).toBe(13500);
     });
 
     it('strips currency symbols and thousands separators', () => {
-        const map = buildPriceCeilingMap([
-            '5711/1A-010:$185,000',
-            '116500LN:€28 000',
-            '124060: $13,500.00',
-        ]);
+        const map = buildPriceCeilingMap(['5711/1A-010:$185,000', '116500LN:€28 000', '124060: $13,500.00']);
         expect(map.get('5711/1A-010')).toBe(185000);
         expect(map.get('116500LN')).toBe(28000);
         expect(map.get('124060')).toBe(13500);
     });
 
     it('understands "185k" and "1.5M" shorthand', () => {
-        const map = buildPriceCeilingMap([
-            '5711/1A-010:185k',
-            '15500ST.OO.1220ST.04:1.5M',
-            '116500LN:28K',
-        ]);
+        const map = buildPriceCeilingMap(['5711/1A-010:185k', '15500ST.OO.1220ST.04:1.5M', '116500LN:28K']);
         expect(map.get('5711/1A-010')).toBe(185000);
         expect(map.get('15500ST.OO.1220ST.04')).toBe(1500000);
         expect(map.get('116500LN')).toBe(28000);
     });
 
     it('uppercases + strips whitespace from the reference', () => {
-        const map = buildPriceCeilingMap([
-            ' 5711/1a-010 : 185000 ',
-            '\t116500ln:28000\n',
-        ]);
+        const map = buildPriceCeilingMap([' 5711/1a-010 : 185000 ', '\t116500ln:28000\n']);
         expect(map.get('5711/1A-010')).toBe(185000);
         expect(map.get('116500LN')).toBe(28000);
     });
@@ -131,16 +113,16 @@ describe('buildPriceCeilingMap', () => {
 
     it('silently skips unparseable rows', () => {
         const map = buildPriceCeilingMap([
-            '5711/1A-010:185000',        // ok
-            'no-separator-row',          // skipped: missing separator
-            '5711/1A-010:not-a-number',  // skipped: non-numeric price
-            '5711/1A-010:0',             // skipped: zero price
-            '5711/1A-010:-100',          // skipped: negative price
-            ':185000',                   // skipped: empty reference
-            '',                          // skipped: empty string
-            { reference: '', max_price_usd: 1 } as any,        // skipped
-            { reference: 'X', max_price_usd: NaN } as any,     // skipped
-            null as any,                                       // skipped
+            '5711/1A-010:185000', // ok
+            'no-separator-row', // skipped: missing separator
+            '5711/1A-010:not-a-number', // skipped: non-numeric price
+            '5711/1A-010:0', // skipped: zero price
+            '5711/1A-010:-100', // skipped: negative price
+            ':185000', // skipped: empty reference
+            '', // skipped: empty string
+            { reference: '', max_price_usd: 1 } as any, // skipped
+            { reference: 'X', max_price_usd: NaN } as any, // skipped
+            null as any, // skipped
         ]);
         expect(map.size).toBe(1);
         expect(map.get('5711/1A-010')).toBe(185000);
@@ -152,10 +134,7 @@ describe('buildPriceCeilingMap', () => {
     });
 
     it('a later row for the same reference overrides an earlier one', () => {
-        const map = buildPriceCeilingMap([
-            '5711/1A-010:100000',
-            '5711/1A-010:185000',
-        ]);
+        const map = buildPriceCeilingMap(['5711/1A-010:100000', '5711/1A-010:185000']);
         expect(map.get('5711/1A-010')).toBe(185000);
         expect(map.size).toBe(1);
     });
@@ -245,14 +224,9 @@ describe('detectOpportunities — anchor routing', () => {
             }),
         ];
 
-        const ops = detectOpportunities(listings, stats, 5, [
-            '5711/1A-010:185000',
-        ]);
+        const ops = detectOpportunities(listings, stats, 5, ['5711/1A-010:185000']);
         const urls = ops.map((o) => o.listing.listing_url).sort();
-        expect(urls).toEqual([
-            'https://example.com/patek-deal',
-            'https://example.com/rolex-deal',
-        ]);
+        expect(urls).toEqual(['https://example.com/patek-deal', 'https://example.com/rolex-deal']);
     });
 
     it('applies the MIN_PRICE_FLOOR_PCT against the active anchor (ceiling)', () => {
@@ -278,18 +252,14 @@ describe('detectOpportunities — anchor routing', () => {
     it('still finds opportunities when stats are missing but a ceiling IS set', () => {
         // Ceiling acts as a STANDALONE anchor — doesn't need median stats
         // (the user provided the truth themselves).
-        const listings = [
-            makeListing({ price_usd: 170000, listing_url: 'https://example.com/x' }),
-        ];
+        const listings = [makeListing({ price_usd: 170000, listing_url: 'https://example.com/x' })];
         const ops = detectOpportunities(listings, [], 5, ['5711/1A-010:185000']);
         expect(ops).toHaveLength(1);
         expect(ops[0]?.listing.price_usd).toBe(170000);
     });
 
     it('accepts a pre-built Map directly (skipping the parser)', () => {
-        const listings = [
-            makeListing({ price_usd: 170000, listing_url: 'https://example.com/x' }),
-        ];
+        const listings = [makeListing({ price_usd: 170000, listing_url: 'https://example.com/x' })];
         const stats = [makeStats({ median_usd: 200000, count: 5 })];
         const ceilingMap = new Map([['5711/1A-010', 185000]]);
         const ops = detectOpportunities(listings, stats, 5, ceilingMap);

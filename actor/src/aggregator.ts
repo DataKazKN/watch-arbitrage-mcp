@@ -11,7 +11,16 @@
  * 1 outlier $200K listing on Hodinkee shouldn't move the threshold for
  * everybody else.
  */
-import type { ArbitrageOpportunity, BoxPapersStatus, Listing, Platform, PriceCeiling, PriceCeilingInput, RefStats, WatchCondition } from './types.js';
+import type {
+    ArbitrageOpportunity,
+    BoxPapersStatus,
+    Listing,
+    Platform,
+    PriceCeiling,
+    PriceCeilingInput,
+    RefStats,
+    WatchCondition,
+} from './types.js';
 import { detectBrand } from './utils/brand.js';
 
 /** Normalize raw condition string from crawlers into the v2 enum. */
@@ -268,9 +277,7 @@ function parsePriceCeilingString(row: string): PriceCeiling | null {
  * Empty / unparseable rows are silently skipped — a bad row should not
  * crash the actor run.
  */
-export function buildPriceCeilingMap(
-    ceilings: PriceCeilingInput[] | undefined,
-): Map<string, number> {
+export function buildPriceCeilingMap(ceilings: PriceCeilingInput[] | undefined): Map<string, number> {
     const map = new Map<string, number>();
     if (!ceilings) return map;
     for (const raw of ceilings) {
@@ -280,9 +287,10 @@ export function buildPriceCeilingMap(
         } else if (raw && typeof raw === 'object') {
             const key = (raw.reference ?? '').replace(/\s+/g, '').toUpperCase();
             const value = Number(raw.max_price_usd);
-            parsed = key && Number.isFinite(value) && value > 0
-                ? { reference: key, max_price_usd: Math.round(value) }
-                : null;
+            parsed =
+                key && Number.isFinite(value) && value > 0
+                    ? { reference: key, max_price_usd: Math.round(value) }
+                    : null;
         } else {
             parsed = null;
         }
@@ -301,9 +309,7 @@ export function detectOpportunities(
 ): ArbitrageOpportunity[] {
     // stats are keyed by SUB-REF (Bug #5 fix). Match each listing to its sub-ref.
     const statsByRef = new Map(stats.map((s) => [s.ref, s]));
-    const ceilingMap = priceCeilings instanceof Map
-        ? priceCeilings
-        : buildPriceCeilingMap(priceCeilings);
+    const ceilingMap = priceCeilings instanceof Map ? priceCeilings : buildPriceCeilingMap(priceCeilings);
     const opportunities: ArbitrageOpportunity[] = [];
     const now = new Date().toISOString();
 
@@ -344,9 +350,7 @@ export function detectOpportunities(
         const referenceMedian = s?.median_usd ?? 0;
         const spreadBase = usedCeiling ? ceiling! : referenceMedian;
         const spread_usd = Math.round(spreadBase - l.price_usd);
-        const spread_pct = spreadBase > 0
-            ? Math.round(((spreadBase - l.price_usd) / spreadBase) * 1000) / 10
-            : 0;
+        const spread_pct = spreadBase > 0 ? Math.round(((spreadBase - l.price_usd) / spreadBase) * 1000) / 10 : 0;
 
         opportunities.push({
             ref: subRef,

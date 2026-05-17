@@ -67,16 +67,11 @@ async function runBatch(): Promise<void> {
     const platforms: Platform[] = input.platforms?.length
         ? input.platforms
         : ['chrono24', 'watchbox', 'bobs', 'watchfinder', 'europeanwatch', 'watchesofswitzerland'];
-    // ---- Spread sensitivity: integer field + optional decimal override ----
-    // The input schema accepts an integer (1-50) plus an optional textfield
-    // for sub-integer precision (e.g. "4.5"). When the decimal field is non-
-    // empty AND parses as a finite number, it wins. Otherwise we fall back to
-    // the integer field. We clamp to [0.5, 50] so 0 or runaway values don't
-    // produce silly thresholds.
-    const decimalRaw = (input.spread_sensitivity_decimal ?? '').toString().trim();
-    const decimalValue = decimalRaw === '' ? NaN : Number.parseFloat(decimalRaw);
-    const integerValue = Number.parseFloat(String(input.spread_sensitivity ?? '5'));
-    const rawSpread = Number.isFinite(decimalValue) ? decimalValue : integerValue;
+    // ---- Spread sensitivity ----
+    // Single `number` field in the schema (minimum 0.5, maximum 50, default 5).
+    // We still defensively coerce + clamp because Apify input can arrive as
+    // string (older runs) or out-of-range when a user edits the JSON directly.
+    const rawSpread = Number.parseFloat(String(input.spread_sensitivity ?? '5'));
     const minSpreadPct = Math.min(50, Math.max(0.5, Number.isFinite(rawSpread) ? rawSpread : 5));
 
     // ---- Per-reference price ceilings (override median anchor for listed refs) ----
@@ -93,7 +88,6 @@ async function runBatch(): Promise<void> {
         platforms,
         min_spread_pct: minSpreadPct,
         price_ceilings_count: priceCeilings.length,
-        spread_decimal_override_used: Number.isFinite(decimalValue),
     });
 
     // Charge actor-start + check spending limit (respect ACTOR_MAX_TOTAL_CHARGE_USD).
@@ -128,7 +122,12 @@ async function runBatch(): Promise<void> {
     // --- One crawler with router-style dispatch by platform ---
     const collected: Listing[] = [];
 
-    const proxyConfiguration = await Actor.createProxyConfiguration({ checkAccess: false });
+    // Honor the `proxyConfiguration` input field (schema editor: "proxy").
+    // Falls back to default Apify proxy when the field is omitted.
+    const proxyConfiguration = await Actor.createProxyConfiguration({
+        ...(input.proxyConfiguration ?? {}),
+        checkAccess: false,
+    });
 
     const crawler = new PlaywrightCrawler({
         proxyConfiguration,

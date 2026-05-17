@@ -1,51 +1,43 @@
 {
     "$schema": "https://apify.com/schemas/v1/input.ide.json",
     "title": "Watch Arbitrage Tracker — Input",
-    "description": "Track Patek/Rolex/AP price spreads across 6 marketplaces. Get instant alerts when a listing is mispriced. Built for pro watch dealers.",
+    "description": "Track Rolex, Patek Philippe & Audemars Piguet price spreads across 6 marketplaces. Get a Telegram ping when a listing breaks below your spread threshold.",
     "type": "object",
     "schemaVersion": 1,
     "properties": {
-
         "references": {
-            "title": "1️⃣ Watch references to track (precise refs only — recommended)",
+            "title": "Watch references",
             "type": "array",
-            "description": "🎯 USE PRECISE REFERENCE NUMBERS for accurate arbitrage detection : '5711/1A-010', '116500LN', '124060', '15500ST', '67600ST.OO.1210ST.01'. Mix Patek/Rolex/AP freely (brand auto-detected). 💡 Tip : start with 5-10 references you actually trade — add more later. ⚠️ Model names like 'Nautilus' or 'Daytona' work too but produce LESS PRECISE arbitrage signals (sub-models with different prices get conflated, e.g. men's 5711 vs ladies 7011). Stick to precise references for reliable spread alerts.",
+            "description": "Precise reference numbers give the cleanest arbitrage signals. Examples: <code>5711/1A-010</code>, <code>116500LN</code>, <code>124060</code>, <code>15500ST.OO.1220ST.04</code>.<br><br>Brand is auto-detected — mix Patek / Rolex / AP freely. Model names like <code>Nautilus</code> or <code>Daytona</code> work too but conflate sub-models with different prices.<br><br><b>Tip:</b> start with 3-5 refs you actually trade, add more later.",
             "editor": "stringList",
             "prefill": [
                 "5711/1A-010",
-                "5167A-001",
                 "116500LN",
-                "124060",
-                "15500ST.OO.1220ST.04"
+                "124060"
             ],
             "minItems": 1,
-            "sectionCaption": "▶ QUICK START — set 3 things and you're done",
-            "sectionDescription": "Just pick the watches you want to monitor and how aggressive the alerts should be. Everything else has smart defaults — skip the advanced section below if you're starting out."
+            "uniqueItems": true,
+            "sectionCaption": "🎯 What to track",
+            "sectionDescription": "Pick the watches you want to monitor. 3-5 references is a good first run."
         },
 
         "spread_sensitivity": {
-            "title": "2️⃣ How aggressive should the alerts be? (% — your choice, 0.5 to 50)",
-            "type": "integer",
-            "description": "Triggers an alert when a listing is BELOW the cross-platform median (or below your per-reference ceiling — see Advanced section) by at least this %. Pick ANY value between 0.5 and 50 — no presets. Lower = more alerts (some noise). Higher = only big opportunities.\n\nReference: 3% = chatty volume flippers, 5% = recommended default, 8% = selective, 10%+ = once-in-a-week, 15%+ = once-in-a-month. The actor accepts the EXACT number you enter — '4.5' fires alerts at 4.5% spread, not rounded to 5%.",
+            "title": "Spread threshold (%)",
+            "type": "number",
+            "description": "Fire an alert when a listing sits below the cross-platform median by at least this %. Decimals work — <code>4.5</code> fires at 4.5%.<br><br><b>Guide:</b> 3% = chatty (volume flippers) · 5% = recommended · 8% = selective · 15%+ = once-a-month opportunities.",
             "editor": "number",
             "default": 5,
-            "minimum": 1,
+            "minimum": 0.5,
             "maximum": 50,
-            "unit": "%"
-        },
-
-        "spread_sensitivity_decimal": {
-            "title": "Fine-tune sensitivity (decimal % — 0.5 to 50)",
-            "type": "string",
-            "description": "OPTIONAL. If you want sub-integer precision (e.g. '4.5', '7.25', '2.5'), enter it here and it overrides the integer above. Accepted format: a decimal number like '4.5' or '7.25'. Leave blank to use the integer setting.",
-            "editor": "textfield",
-            "default": ""
+            "unit": "%",
+            "sectionCaption": "🔔 Alert settings",
+            "sectionDescription": "How aggressive should the alerts be and where do they land."
         },
 
         "alert_channel": {
-            "title": "3️⃣ How do you want to get alerts?",
+            "title": "Where to receive alerts",
             "type": "string",
-            "description": "Pick your preferred channel. Telegram is fastest for time-sensitive flips. Email digest coming v0.2 (we're verifying delivery permissions on Apify platform first to avoid silently dropped alerts).",
+            "description": "Telegram is fastest for time-sensitive flips. Pick <b>Dataset only</b> if you'd rather poll Apify Console yourself.",
             "editor": "select",
             "default": "telegram",
             "enum": [
@@ -53,34 +45,34 @@
                 "dataset_only"
             ],
             "enumTitles": [
-                "📱 Telegram (recommended — fastest)",
-                "💾 Dataset only (no push alerts — I'll check Apify Console)"
+                "📱 Telegram (fastest)",
+                "💾 Dataset only — no push"
             ]
         },
 
         "alert_telegram_bot_token": {
             "title": "Telegram bot token",
             "type": "string",
-            "description": "🔧 ONE-TIME setup (5 min): open @BotFather on Telegram → /newbot → name it (e.g. 'My WatchArb Alerts') → copy the token here. Full guide: https://core.telegram.org/bots#how-do-i-create-a-bot",
+            "description": "One-time setup, 2 min: open <code>@BotFather</code> on Telegram → <code>/newbot</code> → name it → paste the token here. Full guide: https://core.telegram.org/bots#how-do-i-create-a-bot",
             "editor": "textfield",
             "isSecret": true,
-            "sectionCaption": "📱 Telegram setup (only if you picked Telegram or Both above)",
-            "sectionDescription": "Skip this section if you picked Email-only or Dataset-only."
+            "nullable": true
         },
 
         "alert_telegram_chat_id": {
-            "title": "Your Telegram chat ID",
+            "title": "Telegram chat ID",
             "type": "string",
-            "description": "🔧 To find it: open Telegram → search @userinfobot → tap Start → it tells you your numeric chat ID (e.g. '123456789'). Paste it here.",
-            "editor": "textfield"
+            "description": "Open Telegram → search <code>@userinfobot</code> → tap Start → paste the numeric ID here.",
+            "editor": "textfield",
+            "isSecret": true,
+            "nullable": true,
+            "example": "123456789"
         },
 
         "filter_conditions": {
-            "title": "Filter by condition",
+            "title": "Conditions to include",
             "type": "array",
-            "description": "Only include listings matching these conditions. Critical for arbitrage : a NEW Patek 5711 vs PRE-OWNED can have $30K+ spread (different market). 🎯 PRECISION GUIDE : Bobs Watches + Watchfinder UK + European Watch scrape condition RELIABLY. Chrono24 + WatchBox + Watches of Switzerland often mark 'unknown' (only on detail page). 💡 TIP : if you want STRICT 'new only' results → (a) uncheck 'unknown' below, AND (b) in Marketplaces section uncheck Chrono24/WatchBox/WoS, OR (c) toggle 'Strict condition matching' ON below.",
-            "sectionCaption": "🎚️ Filters (optional — refine which listings count toward arbitrage detection)",
-            "sectionDescription": "Filter listings by condition (new/used/vintage) and box-and-papers status. Critical for precise arbitrage : a NEW vs PRE-OWNED 5711 has $30K+ spread.",
+            "description": "A <b>new</b> 5711 vs a <b>pre-owned</b> 5711 can spread by $30K+. Filtering tightens the signal.<br><br>Bobs, Watchfinder UK and European Watch scrape condition reliably. Chrono24, WatchBox and Watches of Switzerland often report <b>unknown</b> — keep it checked if you want full volume.",
             "editor": "select",
             "items": {
                 "type": "string",
@@ -95,14 +87,14 @@
                     "unknown"
                 ],
                 "enumTitles": [
-                    "🆕 New / Unworn (factory-fresh, full set)",
-                    "✨ Like new / Mint (worn briefly, no signs of wear)",
-                    "👍 Very good (light wear, fully serviced)",
-                    "✅ Good (visible wear, normal use)",
-                    "⚠️ Fair (notable wear, may need service)",
-                    "🕰️ Vintage (pre-2000, collector grade)",
-                    "📦 Pre-owned (generic — used by some marketplaces as catch-all)",
-                    "❓ Unknown (condition not specified on listing — include for completeness)"
+                    "🆕 New / Unworn",
+                    "✨ Like new / Mint",
+                    "👍 Very good",
+                    "✅ Good",
+                    "⚠️ Fair",
+                    "🕰️ Vintage (pre-2000)",
+                    "📦 Pre-owned (catch-all)",
+                    "❓ Unknown (not specified)"
                 ]
             },
             "uniqueItems": true,
@@ -112,20 +104,15 @@
                 "very-good",
                 "pre-owned",
                 "unknown"
-            ]
-        },
-
-        "strict_condition_matching": {
-            "title": "🔒 Strict condition matching (recommended for 'new only' arbitrage)",
-            "type": "boolean",
-            "description": "When ON : exclude listings where condition couldn't be reliably scraped from the search page (= 'unknown'). Pairs perfectly with selecting only Bobs + Watchfinder + European Watch in Marketplaces (those 3 scrape condition reliably). When OFF : include 'unknown' listings in your filter results (more volume, less precision).",
-            "default": false
+            ],
+            "sectionCaption": "🎚️ Filter listings",
+            "sectionDescription": "Tighten which listings count toward the spread. Skip if you want maximum volume."
         },
 
         "filter_box_papers": {
-            "title": "Filter by box & papers",
+            "title": "Box & papers status to include",
             "type": "array",
-            "description": "Only include listings with these box/papers status. Critical for arbitrage : a Patek 5711 'full set' commands +20-30% premium vs 'watch only'. Best-effort : Watchfinder + Bobs + European Watch scrape this reliably ; others may mark 'unknown'. Pair with 'Strict condition matching' for clean filtering.",
+            "description": "A <b>full-set</b> 5711 commands a 20-30% premium vs <b>watch-only</b>. Watchfinder, Bobs and European Watch report this reliably; others may report unknown.",
             "editor": "select",
             "items": {
                 "type": "string",
@@ -138,12 +125,12 @@
                     "unknown"
                 ],
                 "enumTitles": [
-                    "🏆 Full set (box + papers + tags + extras)",
-                    "📦📄 Box + papers (no tags/extras)",
-                    "📄 Papers only (no box)",
-                    "📦 Box only (no papers)",
-                    "🕰️ Watch only (no box, no papers)",
-                    "❓ Unknown (not specified — include for completeness)"
+                    "🏆 Full set",
+                    "📦📄 Box + papers",
+                    "📄 Papers only",
+                    "📦 Box only",
+                    "🕰️ Watch only",
+                    "❓ Unknown"
                 ]
             },
             "uniqueItems": true,
@@ -155,10 +142,17 @@
             ]
         },
 
+        "strict_condition_matching": {
+            "title": "Strict condition matching",
+            "type": "boolean",
+            "description": "When <b>on</b>, drop listings where the marketplace didn't report a condition. Pairs well with restricting marketplaces to Bobs + Watchfinder + European Watch.",
+            "default": false
+        },
+
         "platforms": {
             "title": "Marketplaces to monitor",
             "type": "array",
-            "description": "Default: all 6 active marketplaces. Uncheck any you don't want to monitor (e.g. you only flip US-based, uncheck UK/EU sources).",
+            "description": "Uncheck a marketplace to skip it (e.g. US-only flippers can drop the UK sources).",
             "editor": "select",
             "items": {
                 "type": "string",
@@ -172,13 +166,13 @@
                     "hodinkee"
                 ],
                 "enumTitles": [
-                    "🌍 Chrono24 (largest global marketplace)",
-                    "🇺🇸 WatchBox / The 1916 Company (premium dealer, USA)",
-                    "🇺🇸 Bobs Watches (Rolex specialist, USA)",
-                    "🇬🇧 Watchfinder UK (UK leader)",
-                    "🇺🇸 European Watch Company (Boston dealer)",
-                    "🇬🇧 Watches of Switzerland (UK+US retail chain)",
-                    "⚠️ Hodinkee Shop (deprecated — winding down 2026, kept for legacy)"
+                    "🌍 Chrono24",
+                    "🇺🇸 WatchBox / The 1916 Company",
+                    "🇺🇸 Bob's Watches",
+                    "🇬🇧 Watchfinder UK",
+                    "🇺🇸 European Watch Company",
+                    "🇬🇧 Watches of Switzerland",
+                    " "
                 ]
             },
             "uniqueItems": true,
@@ -190,34 +184,44 @@
                 "europeanwatch",
                 "watchesofswitzerland"
             ],
-            "sectionCaption": "⚙️ Advanced options (everything below is optional — skip if first-time)",
-            "sectionDescription": "Defaults work great for most dealers. Tweak only if you have a specific need."
+            "sectionCaption": "⚙️ Advanced — Platforms & cost",
+            "sectionDescription": "Defaults are good for most dealers. Touch only if you have a specific need."
         },
 
         "price_ceilings": {
-            "title": "🎯 Per-reference price ceilings (optional — override the median anchor)",
+            "title": "Per-reference price ceilings (USD)",
             "type": "array",
-            "description": "Set YOUR OWN target intake price per reference, in USD. The alert then fires when ANY platform lists that reference below your ceiling — instead of using the cross-platform median as the anchor.\n\n📝 FORMAT: one row per reference, written as `reference:max_price_usd`. No spaces around the colon. Examples:\n  • `5711/1A-010:185000` → alert when 5711/1A-010 is listed below $185,000\n  • `116500LN:28000` → alert when 116500LN is listed below $28,000\n  • `124060:13500` → alert when 124060 is listed below $13,500\n\n💡 LEAVE EMPTY to keep the default median-anchored behavior for every reference. Mix-and-match supported: refs you list use your ceiling; refs you don't list use the median anchor. Invalid rows (missing colon, non-numeric price, price ≤ 0) are silently skipped — bad rows won't crash the run.",
+            "description": "Override the median anchor with your own target intake price per reference. Format: <code>reference:max_price_usd</code> with no spaces around the colon.<br><br>Examples: <code>5711/1A-010:185000</code>, <code>116500LN:28000</code>. Leave empty to use the cross-platform median for every ref. Invalid rows are silently skipped.",
             "editor": "stringList",
-            "items": {
-                "type": "string"
-            },
-            "prefill": [
-                "5711/1A-010:185000",
-                "116500LN:28000"
-            ],
+            "items": { "type": "string" },
+            "prefill": [],
             "default": []
         },
 
         "max_listings_per_ref_per_platform": {
-            "title": "Max listings per reference per platform",
+            "title": "Max listings per ref per platform",
             "type": "integer",
-            "description": "💰 Cost control: caps how many listings to fetch per ref per marketplace. Lower = cheaper run. Default 25 is good for most cases (= 60 refs × 6 platforms × 25 = 9000 max listings/run).",
+            "description": "Caps fetches per reference per marketplace. Default <b>25</b> handles ~60 refs × 6 platforms ≈ 9000 listings/run. Lower for cheaper runs.",
             "editor": "number",
             "default": 25,
             "minimum": 1,
-            "maximum": 200
+            "maximum": 200,
+            "unit": "listings"
+        },
+
+        "proxyConfiguration": {
+            "title": "Proxy configuration",
+            "type": "object",
+            "description": "Apify Proxy is recommended for reliable scraping across all 6 marketplaces. Residential proxies help avoid blocks on Chrono24 and WatchBox.",
+            "editor": "proxy",
+            "prefill": {
+                "useApifyProxy": true,
+                "apifyProxyGroups": ["RESIDENTIAL"]
+            },
+            "default": {
+                "useApifyProxy": true
+            }
         }
     },
-    "required": ["references", "spread_sensitivity", "alert_channel"]
+    "required": ["references", "alert_channel"]
 }

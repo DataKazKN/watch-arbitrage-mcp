@@ -30,25 +30,32 @@ export interface PriceCeiling {
  */
 export type PriceCeilingInput = string | PriceCeiling;
 
+/** Apify proxy configuration (matches `editor: "proxy"` JSON shape). */
+export interface ProxyConfigurationInput {
+    useApifyProxy?: boolean;
+    apifyProxyGroups?: string[];
+    apifyProxyCountry?: string;
+    proxyUrls?: string[];
+}
+
 export interface ActorInput {
     references: string[];
     platforms: Platform[];
-    /** Integer % between 1 and 50 (default 5). Overridden by spread_sensitivity_decimal when present. */
+    /** Spread threshold in % (0.5 - 50, default 5). Schema is `number`; we still
+     *  accept `string` defensively for older runs that used the integer+decimal pair. */
     spread_sensitivity?: number | string;
-    /** Optional decimal % override (e.g. "4.5"). Empty string means use spread_sensitivity. */
-    spread_sensitivity_decimal?: string;
     /** Per-reference price ceilings — overrides the median anchor for these refs only.
      *  Accepts either "ref:price" strings (current UI) or {reference, max_price_usd}
      *  objects (legacy JSON-editor shape). */
     price_ceilings?: PriceCeilingInput[];
-    alert_channel?: 'telegram' | 'email' | 'both' | 'dataset_only';
+    alert_channel?: 'telegram' | 'dataset_only';
     max_listings_per_ref_per_platform: number;
     alert_telegram_bot_token?: string;
     alert_telegram_chat_id?: string;
-    alert_email?: string;
     filter_conditions?: WatchCondition[];
     filter_box_papers?: BoxPapersStatus[];
     strict_condition_matching?: boolean;
+    proxyConfiguration?: ProxyConfigurationInput;
 }
 
 export interface Listing {
