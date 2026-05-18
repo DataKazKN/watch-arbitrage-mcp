@@ -214,8 +214,14 @@ async function runBatch(): Promise<void> {
             }
 
             if (listings.length > 0) {
-                collected.push(...listings);
-                await Actor.pushData(listings);
+                // Annotate with country at push time so the dataset row carries
+                // the same `country` field as KV stores (MARKET_SNAPSHOT,
+                // ARBITRAGE_OPPORTUNITIES, CROSS_COUNTRY_SPREADS). Previously
+                // pushData ran on raw listings (country=null in dataset) while
+                // KV stores ran on the post-annotateCountries pipeline.
+                const enriched = annotateCountries(listings);
+                collected.push(...enriched);
+                await Actor.pushData(enriched);
                 log.info(`${platform}: +${listings.length} listings for ref=${ctx.request.userData?.ref}`);
             }
         },
