@@ -48,6 +48,13 @@ import type { Platform } from '../types.js';
  * - yahoojp (beta, added 2026-05-17): Yahoo Auctions Japan. JPY pricing and
  *   bilingual JP/EN listings. URL builder uses the keyword search route
  *   /jp/search/keyword/{q}. Auction-format vs Buy-It-Now needs special handling.
+ * - analogshift (added 2026-05-18, verified DOM v1): NYC vintage + neo-vintage
+ *   Shopify storefront. /collections/{brand-slug} grid pages, 48 Patek cards
+ *   verified live with USD pricing ($27,500 — $149,950 range).
+ * - bachmannscher (added 2026-05-18, verified DOM v1): Munich pre-owned (TYPO3).
+ *   Brand filter URLs require an unstable per-session cHash hash; we hit the
+ *   unfiltered catalog `/gebrauchte-luxusuhren-kaufen.html` (30 items at scan
+ *   time) and let the crawler filter client-side by brand keyword.
  */
 
 function encodeRef(ref: string): string {
@@ -212,6 +219,25 @@ function buildSingleSearchUrl(platform: Platform, ref: string): string {
             // Yahoo Auctions JP keyword search. Returns auction-format + Buy-It-Now
             // mixed. Crawler will need to filter on 即決 (buy-now) for stable prices.
             return `https://auctions.yahoo.co.jp/jp/search/keyword/${q}?p=${q}`;
+
+        // ── extra sources (added 2026-05-18) ──
+        case 'analogshift': {
+            // Shopify collection page per brand.
+            const r2 = ref.toLowerCase();
+            if (/^57|^58|^59|^5[0-9]{3}|nautilus|aquanaut|calatrava|world[-\s]?time|grand[-\s]?complication/.test(r2)) {
+                return 'https://www.analogshift.com/collections/patek-philippe';
+            }
+            if (/royal\s*oak|royaloak|^15\d{3}|^26\d{3}|^77\d{3}/.test(r2)) {
+                return 'https://www.analogshift.com/collections/audemars-piguet';
+            }
+            return 'https://www.analogshift.com/collections/rolex';
+        }
+
+        case 'bachmannscher':
+            // Unfiltered catalog — small inventory (~30 items), crawler filters by
+            // brand keyword. Per-brand filter URLs require TYPO3 cHash hash that
+            // is bound to session state and not externally reusable.
+            return 'https://www.bachmann-scher.de/gebrauchte-luxusuhren-kaufen.html';
 
         default: {
             // Exhaustiveness guard — TS prevents unknown `platform` at compile time.

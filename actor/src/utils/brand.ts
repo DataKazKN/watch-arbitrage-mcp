@@ -93,6 +93,11 @@ export function platformLabel(platform: Platform): string {
             return 'H. Spliedt (Germany)';
         case 'acollectedman':
             return 'A Collected Man (London)';
+        // ── Round 3 sources (added 2026-05-18) ──
+        case 'analogshift':
+            return 'Analog:Shift (NYC)';
+        case 'bachmannscher':
+            return 'Bachmann & Scher (Munich)';
         default: {
             const exhaustive: never = platform;
             return String(exhaustive);

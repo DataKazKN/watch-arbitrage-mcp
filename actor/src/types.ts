@@ -24,7 +24,10 @@ export type Platform =
     | 'yahoojp' // real source, requires apifyProxyCountry='JP' (geo-blocks EEA/UK)
     // Round 2 expansion (added 2026-05-17 evening, all live-verified):
     | 'spliedt' // DE — H. Spliedt, Munich/Hamburg/Sylt pre-owned, Shopify .product-card
-    | 'acollectedman'; // UK — A Collected Man London, premium pre-owned + archive
+    | 'acollectedman' // UK — A Collected Man London, premium pre-owned + archive
+    // Round 3 expansion (added 2026-05-18, live-verified via Chrome MCP):
+    | 'analogshift' // US (NYC) — Analog:Shift, vintage + neo-vintage Shopify, .card-wrapper
+    | 'bachmannscher'; // DE (Munich) — Bachmann & Scher, TYPO3 .watch-list-item
 
 /**
  * Country code per platform. ISO-style 2-letter codes, plus "EU" as a regional
@@ -49,6 +52,8 @@ export const PLATFORM_COUNTRY: Record<Platform, Country> = {
     yahoojp: 'JP',
     spliedt: 'DE',
     acollectedman: 'UK',
+    analogshift: 'US',
+    bachmannscher: 'DE',
 };
 
 export const COUNTRY_LABEL: Record<Country, string> = {

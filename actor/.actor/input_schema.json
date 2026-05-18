@@ -1,7 +1,7 @@
 {
     "$schema": "https://apify.com/schemas/v1/input.ide.json",
     "title": "Watch Arbitrage Tracker — Input",
-    "description": "Track Rolex, Patek Philippe & Audemars Piguet price spreads across 6 marketplaces. Get a Telegram ping when a listing breaks below your spread threshold.",
+    "description": "Track Rolex, Patek Philippe & Audemars Piguet price spreads across 13 marketplaces. Get a Telegram ping when a listing breaks below your spread threshold.",
     "type": "object",
     "schemaVersion": 1,
     "properties": {
@@ -170,7 +170,7 @@
         "platforms": {
             "title": "Marketplaces to monitor",
             "type": "array",
-            "description": "Uncheck a marketplace to skip it. The Watch Club (UK/HK office) shipped with verified DOM v1. Yahoo Auctions Japan requires <code>apifyProxyCountry: 'JP'</code> at runtime — Yahoo geo-blocks EEA/UK traffic.",
+            "description": "Uncheck a marketplace to skip it. 13 verified pre-owned dealers across US/UK/DE/JP. Yahoo Auctions Japan requires <code>apifyProxyCountry: 'JP'</code> at runtime — Yahoo geo-blocks EEA/UK traffic.",
             "editor": "select",
             "items": {
                 "type": "string",
@@ -185,7 +185,9 @@
                     "watchclub",
                     "yahoojp",
                     "spliedt",
-                    "acollectedman"
+                    "acollectedman",
+                    "analogshift",
+                    "bachmannscher"
                 ],
                 "enumTitles": [
                     "🌍 Chrono24",
@@ -198,7 +200,9 @@
                     "🇬🇧 The Watch Club — London / HK office",
                     "🇯🇵 Yahoo Auctions Japan (requires non-EEA proxy)",
                     "🇩🇪 H. Spliedt — Munich/Hamburg/Sylt",
-                    "🇬🇧 A Collected Man — London (premium + archive)"
+                    "🇬🇧 A Collected Man — London (premium + archive)",
+                    "🇺🇸 Analog:Shift — NYC vintage + neo-vintage",
+                    "🇩🇪 Bachmann & Scher — Munich pre-owned"
                 ]
             },
             "uniqueItems": true,
@@ -211,7 +215,7 @@
                 "watchesofswitzerland"
             ],
             "sectionCaption": "⚙️ Advanced — Platforms & cost",
-            "sectionDescription": "6 production sources by default. The Watch Club + Yahoo JP available as opt-in extras."
+            "sectionDescription": "6 production sources enabled by default. 7 opt-in extras: Watch Club, Yahoo JP, H. Spliedt, A Collected Man, Analog:Shift, Bachmann & Scher (plus the dormant Hodinkee slot)."
         },
 
         "price_ceilings": {

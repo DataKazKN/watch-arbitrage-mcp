@@ -34,6 +34,8 @@ import {
 } from './aggregator.js';
 import { dispatchAlerts, dispatchCrossCountryAlerts } from './alerts.js';
 import { acollectedmanHandler } from './crawlers/acollectedman.js';
+import { analogshiftHandler } from './crawlers/analogshift.js';
+import { bachmannscherHandler } from './crawlers/bachmannscher.js';
 import { bobsHandler } from './crawlers/bobs.js';
 import { chrono24Handler } from './crawlers/chrono24.js';
 import { europeanwatchHandler } from './crawlers/europeanwatch.js';
@@ -197,6 +199,13 @@ async function runBatch(): Promise<void> {
                         break;
                     case 'acollectedman':
                         listings = await acollectedmanHandler(ctx, maxListingsPerRefPerPlatform);
+                        break;
+                    // ── extra sources (added 2026-05-18) ──
+                    case 'analogshift':
+                        listings = await analogshiftHandler(ctx, maxListingsPerRefPerPlatform);
+                        break;
+                    case 'bachmannscher':
+                        listings = await bachmannscherHandler(ctx, maxListingsPerRefPerPlatform);
                         break;
                 }
             } catch (err) {
