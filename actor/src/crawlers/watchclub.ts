@@ -31,14 +31,12 @@ import type { Listing } from '../types.js';
 import { detectBrand } from '../utils/brand.js';
 import { parsePrice, toUsd } from '../utils/fx.js';
 
-const CARD_SELECTOR = 'a[href*="-ref-"][href*="watchclub.com"], a[href*="/patek-philippe/"][href*="-ref-"], a[href*="/rolex/"][href*="-ref-"], a[href*="/audemars-piguet/"][href*="-ref-"]';
+const CARD_SELECTOR =
+    'a[href*="-ref-"][href*="watchclub.com"], a[href*="/patek-philippe/"][href*="-ref-"], a[href*="/rolex/"][href*="-ref-"], a[href*="/audemars-piguet/"][href*="-ref-"]';
 const SEL_PRICE = '.productPrice';
 const SEL_TITLE = 'h3, h4, .mainTitle';
 
-export async function watchclubHandler(
-    ctx: PlaywrightCrawlingContext,
-    maxListings: number,
-): Promise<Listing[]> {
+export async function watchclubHandler(ctx: PlaywrightCrawlingContext, maxListings: number): Promise<Listing[]> {
     const { page, request } = ctx;
     const ref = (request.userData?.ref as string) ?? '';
 
@@ -59,8 +57,7 @@ export async function watchclubHandler(
 
     for (const card of cards.slice(0, maxListings)) {
         try {
-            const priceRaw =
-                (await card.$eval(SEL_PRICE, (el) => el.textContent?.trim() ?? '').catch(() => '')) || '';
+            const priceRaw = (await card.$eval(SEL_PRICE, (el) => el.textContent?.trim() ?? '').catch(() => '')) || '';
 
             // Skip unavailable listings (SOLD / RESERVED / POA = no price comparable).
             if (/^(SOLD|RESERVED|POA|ENQUIRE)/i.test(priceRaw)) continue;

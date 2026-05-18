@@ -44,10 +44,7 @@ const LINK_SELECTOR = 'a.full-unstyled-link';
 const TITLE_SELECTOR = '.card-information__text, .caption-with-letter-spacing';
 const PRICE_SELECTOR = '.price-item--regular, .price-item';
 
-export async function analogshiftHandler(
-    ctx: PlaywrightCrawlingContext,
-    maxListings: number,
-): Promise<Listing[]> {
+export async function analogshiftHandler(ctx: PlaywrightCrawlingContext, maxListings: number): Promise<Listing[]> {
     const { page, request } = ctx;
     const ref = (request.userData?.ref as string) ?? '';
 
@@ -82,13 +79,11 @@ export async function analogshiftHandler(
             if (!parsed) continue;
 
             const href =
-                (await card
-                    .$eval(LINK_SELECTOR, (el) => (el as HTMLAnchorElement).href)
-                    .catch(() => '')) || request.url;
+                (await card.$eval(LINK_SELECTOR, (el) => (el as HTMLAnchorElement).href).catch(() => '')) ||
+                request.url;
 
             const title =
-                (await card.$eval(TITLE_SELECTOR, (el) => el.textContent?.trim() ?? '').catch(() => '')) ||
-                '';
+                (await card.$eval(TITLE_SELECTOR, (el) => el.textContent?.trim() ?? '').catch(() => '')) || '';
 
             if (isStrictRef) {
                 // Title rarely contains the ref number; URL slug usually does (or

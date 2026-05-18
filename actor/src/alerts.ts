@@ -195,18 +195,12 @@ export async function dispatchCrossCountryAlerts(
     if (config.telegramBotToken && config.telegramChatId) {
         for (const s of fresh) {
             try {
-                await sendTelegram(
-                    config.telegramBotToken,
-                    config.telegramChatId,
-                    formatCrossCountryMessage(s),
-                );
+                await sendTelegram(config.telegramBotToken, config.telegramChatId, formatCrossCountryMessage(s));
                 await markSent(s.ref);
                 telegramSent += 1;
                 const r = await Actor.charge({ eventName: 'spread-alert-triggered' }).catch(() => null);
                 if (r?.eventChargeLimitReached) {
-                    log.warning(
-                        'User spending limit reached on spread-alert-triggered. Stopping further alerts.',
-                    );
+                    log.warning('User spending limit reached on spread-alert-triggered. Stopping further alerts.');
                     break;
                 }
             } catch (err) {

@@ -59,10 +59,7 @@ const BRAND_KEYWORDS: Record<Brand, RegExp[]> = {
     unknown: [],
 };
 
-export async function bachmannscherHandler(
-    ctx: PlaywrightCrawlingContext,
-    maxListings: number,
-): Promise<Listing[]> {
+export async function bachmannscherHandler(ctx: PlaywrightCrawlingContext, maxListings: number): Promise<Listing[]> {
     const { page, request } = ctx;
     const ref = (request.userData?.ref as string) ?? '';
 
@@ -85,9 +82,7 @@ export async function bachmannscherHandler(
     for (const card of cards.slice(0, maxListings)) {
         try {
             const priceRaw =
-                (await card
-                    .$eval(PRICE_SELECTOR, (el) => el.textContent?.trim() ?? '')
-                    .catch(() => '')) || '';
+                (await card.$eval(PRICE_SELECTOR, (el) => el.textContent?.trim() ?? '').catch(() => '')) || '';
             if (!priceRaw) continue;
             if (/^(SOLD|RESERVED|POA|ENQUIRE|verkauft)/i.test(priceRaw)) continue;
 
@@ -95,9 +90,8 @@ export async function bachmannscherHandler(
             if (!parsed) continue;
 
             const href =
-                (await card
-                    .$eval(LINK_SELECTOR, (el) => (el as HTMLAnchorElement).href)
-                    .catch(() => '')) || request.url;
+                (await card.$eval(LINK_SELECTOR, (el) => (el as HTMLAnchorElement).href).catch(() => '')) ||
+                request.url;
 
             // Concatenate title-ish texts (short-title + watch-name + split-title) for
             // robust filtering on both brand keyword and ref substring.

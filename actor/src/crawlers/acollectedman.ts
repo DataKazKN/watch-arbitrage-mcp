@@ -35,10 +35,7 @@ const PRODUCT_LINK_SELECTOR = 'a[href*="/products/"]';
 const PRICE_SELECTOR = '[class*="price"], .money';
 const IMG_SELECTOR = 'img[alt]';
 
-export async function acollectedmanHandler(
-    ctx: PlaywrightCrawlingContext,
-    maxListings: number,
-): Promise<Listing[]> {
+export async function acollectedmanHandler(ctx: PlaywrightCrawlingContext, maxListings: number): Promise<Listing[]> {
     const { page, request } = ctx;
     const ref = (request.userData?.ref as string) ?? '';
 
@@ -68,14 +65,16 @@ export async function acollectedmanHandler(
             if (!parsed) continue;
 
             const href =
-                (await card
-                    .$eval(PRODUCT_LINK_SELECTOR, (el) => (el as HTMLAnchorElement).href)
-                    .catch(() => '')) || request.url;
+                (await card.$eval(PRODUCT_LINK_SELECTOR, (el) => (el as HTMLAnchorElement).href).catch(() => '')) ||
+                request.url;
 
             // Title from img alt-text (richer than textContent in this site).
             const altText =
                 (await card.$eval(IMG_SELECTOR, (el) => (el as HTMLImageElement).alt ?? '').catch(() => '')) || '';
-            const title = altText.replace(/^buy\s+/i, '').replace(/\s+at\s+A Collected Man.*$/i, '').trim();
+            const title = altText
+                .replace(/^buy\s+/i, '')
+                .replace(/\s+at\s+A Collected Man.*$/i, '')
+                .trim();
 
             if (isStrictRef) {
                 const haystack = `${title} ${altText} ${href}`.toLowerCase().replace(/[^\w]/g, '');

@@ -15,7 +15,7 @@ Current file: 13 fields, 222 lines. Mixed quality. Concrete issues:
 3. **`spread_sensitivity` + `spread_sensitivity_decimal` is two fields for one concept**. The second exists purely because the first is `integer`. Top scrapers use `type: "number"` with `minimum: 0.5` and let the user type `4.5` directly. The split is a leak of implementation into UX. Delete the decimal sibling.
 4. **`sectionCaption` placement is wrong**. The first `sectionCaption` (`▶ QUICK START …`) is attached to `references`, the third (`🎚️ Filters`) is attached to `filter_conditions`, the fourth (`⚙️ Advanced options`) is attached to `platforms`. Apify renders a section *starting* at the field that owns the caption. That's fine, but the captions repeat the description below them — same text twice on screen.
 5. **`sectionDescription` is missing on the Telegram section description** and the Telegram section uses `📱 Telegram setup (only if you picked Telegram or Both above)` — "or Both" is a stale reference to a removed option (only `telegram` and `dataset_only` exist in the enum).
-6. **`platforms` enum advertises 7 platforms** (chrono24, watchbox, bobs, watchfinder, europeanwatch, watchesofswitzerland, hodinkee) but the prompt says **14 marketplaces** (MR Watches HK, Yahoo Japan, etc.). Either the schema is out of date or the README/title is. This kills trust — every winner publishes a schema that matches the README.
+6. **`platforms` enum advertises 7 platforms** (chrono24, watchbox, bobs, watchfinder, europeanwatch, watchesofswitzerland, hodinkee) but the prompt says **13 marketplaces** (MR Watches HK, Yahoo Japan, etc.). Either the schema is out of date or the README/title is. This kills trust — every winner publishes a schema that matches the README.
 7. **`alert_channel` enum has 2 options but description mentions "Email digest coming v0.2"** — winners never expose un-shipped options. Keep the enum, drop the future-tense line; promise nothing the actor cannot deliver today.
 8. **`isSecret: true` is on the bot token (good)** but `alert_telegram_chat_id` is not flagged as sensitive even though it's a private identifier. Winners (`apify/web-scraper.initialCookies`) use `isSecret` consistently for any value that would embarrass the user if leaked into a Telegram share.
 9. **No `nullable: true` anywhere.** When `references` defaults are not used and the user empties the list, Apify shows "null". Winners use `nullable: true` plus `minItems` to give clean validation errors.
@@ -327,7 +327,7 @@ Also fix in `actor.json`:
 3. **Trim every `description` to ≤ 280 chars, wrap literals in `<code>`, add `<br><br>`.** 30 minutes.
 4. **Reduce default `references` prefill from 5 → 3** so the first click is cheap. Pair with `max_listings_per_ref_per_platform` default 25 (already correct). 2 minutes.
 5. **Add `proxyConfiguration` with `editor: "proxy"`.** 5 minutes. Single biggest "looks professional" signal.
-6. **Reconcile platform count between README (14 marketplaces) and schema (7).** Either expand the enum or update the README — pick one truth today. Critical for trust.
+6. **Reconcile platform count between README (13 marketplaces) and schema (7).** Either expand the enum or update the README — pick one truth today. Critical for trust.
 7. **Drop `spread_sensitivity` from `required`** — it has a default. 30 seconds.
 8. **Hide Hodinkee via `enumTitles: " "`** instead of the deprecation label. 1 minute.
 9. **Add `isSecret: true` + `example: "123456789"` on `alert_telegram_chat_id`.** 1 minute.

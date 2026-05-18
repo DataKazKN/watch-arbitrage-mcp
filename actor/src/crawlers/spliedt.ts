@@ -31,10 +31,7 @@ import { parsePrice, toUsd } from '../utils/fx.js';
 const CARD_SELECTOR = '.product-card';
 const PRODUCT_LINK_SELECTOR = 'a[href*="/products/"]';
 
-export async function spliedtHandler(
-    ctx: PlaywrightCrawlingContext,
-    maxListings: number,
-): Promise<Listing[]> {
+export async function spliedtHandler(ctx: PlaywrightCrawlingContext, maxListings: number): Promise<Listing[]> {
     const { page, request } = ctx;
     const ref = (request.userData?.ref as string) ?? '';
 
@@ -55,9 +52,8 @@ export async function spliedtHandler(
     for (const card of cards.slice(0, maxListings)) {
         try {
             const href =
-                (await card
-                    .$eval(PRODUCT_LINK_SELECTOR, (el) => (el as HTMLAnchorElement).href)
-                    .catch(() => '')) || request.url;
+                (await card.$eval(PRODUCT_LINK_SELECTOR, (el) => (el as HTMLAnchorElement).href).catch(() => '')) ||
+                request.url;
             const fullText = (await card.evaluate((el) => el.textContent?.trim() ?? '').catch(() => '')) || '';
             const titleClean = fullText.replace(/\s+/g, ' ').slice(0, 250);
 

@@ -24,9 +24,25 @@ const RATES_TO_USD: Record<string, number> = {
  * (5-10% import duty + 5-10% courier/customs fee). Simplified flat estimate;
  * dealers should treat as ±5% accurate. Clearly labeled "estimate" in alerts.
  */
-const EU_TO_US_IMPORT_OVERHEAD = 0.20;
+const EU_TO_US_IMPORT_OVERHEAD = 0.2;
 
-const EU_LOCATIONS = new Set(['DE', 'FR', 'IT', 'ES', 'NL', 'BE', 'AT', 'IE', 'SE', 'DK', 'FI', 'PL', 'PT', 'CZ', 'EU']);
+const EU_LOCATIONS = new Set([
+    'DE',
+    'FR',
+    'IT',
+    'ES',
+    'NL',
+    'BE',
+    'AT',
+    'IE',
+    'SE',
+    'DK',
+    'FI',
+    'PL',
+    'PT',
+    'CZ',
+    'EU',
+]);
 
 export function toUsd(amount: number, currency: string): number {
     const rate = RATES_TO_USD[currency.toUpperCase()];
