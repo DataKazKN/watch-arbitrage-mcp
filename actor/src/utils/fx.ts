@@ -53,14 +53,18 @@ export function parsePrice(raw: string): { amount: number; currency: string } | 
 
     const cleaned = raw.replace(/\s+/g, ' ').trim();
 
-    // Detect currency
+    // Detect currency. Order matters: HK$ before bare $ (substring), full-width
+    // 円 / ￥ for Japanese sites before generic ¥, and HKD prefix variants.
     let currency = 'USD';
     if (/€|EUR/i.test(cleaned)) currency = 'EUR';
     else if (/£|GBP/i.test(cleaned)) currency = 'GBP';
     else if (/CHF|FR\./i.test(cleaned)) currency = 'CHF';
-    else if (/¥|JPY/i.test(cleaned)) currency = 'JPY';
-    else if (/HK\$/i.test(cleaned)) currency = 'HKD';
+    else if (/HK\$|HKD|港幣/i.test(cleaned)) currency = 'HKD';
+    else if (/[¥￥]|JPY|円/i.test(cleaned)) currency = 'JPY';
     else if (/\$|USD/i.test(cleaned)) currency = 'USD';
+
+    // Japanese 万 (man = 10,000-unit) multiplier. "2,250万円" = 2,250 × 10,000 = 22,500,000.
+    const hasManMultiplier = currency === 'JPY' && /万/.test(cleaned);
 
     // Extract numeric portion. Strategy: keep digits + separators, then normalize.
     const numericMatch = cleaned.match(/[\d.,]+/);
@@ -94,8 +98,11 @@ export function parsePrice(raw: string): { amount: number; currency: string } | 
         }
     }
 
-    const amount = parseFloat(n);
+    let amount = parseFloat(n);
     if (Number.isNaN(amount) || amount <= 0) return null;
+
+    // Apply 万 multiplier last so digit-parsing happens on the bare number.
+    if (hasManMultiplier) amount *= 10_000;
 
     return { amount, currency };
 }

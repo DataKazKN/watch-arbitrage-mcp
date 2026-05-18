@@ -45,8 +45,11 @@ import type { Platform } from '../types.js';
  *   different inventory mix (vintage Rolex / Patek). Search at /search?q={query}.
  * - subdial (beta, added 2026-05-17): UK indie pre-owned, Shopify-style storefront.
  *   Search at /search?q={query}.
- * - mrwatches (beta, added 2026-05-17): Hong Kong dealer, HKD pricing. URL at
- *   /search?q={query}. Currency parsing requires HKD → USD support in fx.ts.
+ * - watchclub (beta, added 2026-05-17, was `mrwatches` before live verification):
+ *   The Watch Club London — UK-headquartered pre-owned dealer with a Hong Kong
+ *   office (verified live 2026-05-17). Search endpoint is broken; we hit brand
+ *   grid pages /patek-philippe, /rolex, /audemars-piguet and let the crawler
+ *   filter by ref substring (same approach as europeanwatch). Currency: GBP.
  * - yahoojp (beta, added 2026-05-17): Yahoo Auctions Japan. JPY pricing and
  *   bilingual JP/EN listings. URL builder uses the keyword search route
  *   /jp/search/keyword/{q}. Auction-format vs Buy-It-Now needs special handling.
@@ -195,9 +198,17 @@ function buildSingleSearchUrl(platform: Platform, ref: string): string {
             // UK indie pre-owned. Shopify storefront.
             return `https://subdial.com/search?q=${q}&type=product`;
 
-        case 'mrwatches':
-            // Hong Kong dealer. HKD pricing — currency conversion handled in fx.ts.
-            return `https://www.mrwatches.com.hk/search?q=${q}`;
+        case 'watchclub': {
+            // /search?q= returns 404 — use brand grid pages instead.
+            const r2 = ref.toLowerCase();
+            if (/^57|^58|^59|^5[0-9]{3}|nautilus|aquanaut|calatrava|world[-\s]?time|grand[-\s]?complication/.test(r2)) {
+                return 'https://www.watchclub.com/patek-philippe';
+            }
+            if (/royal\s*oak|royaloak|^15\d{3}|^26\d{3}|^77\d{3}/.test(r2)) {
+                return 'https://www.watchclub.com/audemars-piguet';
+            }
+            return 'https://www.watchclub.com/rolex';
+        }
 
         case 'yahoojp':
             // Yahoo Auctions JP keyword search. Returns auction-format + Buy-It-Now

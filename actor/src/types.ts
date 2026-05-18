@@ -20,7 +20,7 @@ export type Platform =
     | 'crownandcaliber'
     | 'tropicalwatch'
     | 'subdial'
-    | 'mrwatches'
+    | 'watchclub'
     | 'yahoojp';
 
 /**
@@ -47,7 +47,7 @@ export const PLATFORM_COUNTRY: Record<Platform, Country> = {
     crownandcaliber: 'US',
     tropicalwatch: 'US',
     subdial: 'UK',
-    mrwatches: 'HK',
+    watchclub: 'UK',
     yahoojp: 'JP',
 };
 

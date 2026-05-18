@@ -41,10 +41,7 @@ export function annotateCountries(listings: Listing[]): Listing[] {
  * Caller can take the top-1 pair as the alert, or surface all pairs to a
  * dashboard.
  */
-export function computeCrossCountrySpread(
-    listings: readonly Listing[],
-    ref: string,
-): CrossCountrySpread[] {
+export function computeCrossCountrySpread(listings: readonly Listing[], ref: string): CrossCountrySpread[] {
     const refListings = listings.filter((l) => l.ref === ref && l.price_usd > 0);
     if (refListings.length < 2) return [];
 

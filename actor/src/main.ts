@@ -24,15 +24,22 @@ import { launchOptions as camoufoxLaunchOptions } from 'camoufox-js';
 import { setTimeout as sleep } from 'node:timers/promises';
 import { firefox } from 'playwright';
 
-import { aggregate, applyFilters, detectOpportunities, filterByRefMatch } from './aggregator.js';
-import { dispatchAlerts } from './alerts.js';
+import {
+    aggregate,
+    annotateCountries,
+    applyFilters,
+    computeCrossCountrySpread,
+    detectOpportunities,
+    filterByRefMatch,
+} from './aggregator.js';
+import { dispatchAlerts, dispatchCrossCountryAlerts } from './alerts.js';
 import { bobsHandler } from './crawlers/bobs.js';
 import { chrono24Handler } from './crawlers/chrono24.js';
 import { crownandcaliberHandler } from './crawlers/crownandcaliber.js';
 import { europeanwatchHandler } from './crawlers/europeanwatch.js';
 import { govbergHandler } from './crawlers/govberg.js';
 import { hodinkeeHandler } from './crawlers/hodinkee.js';
-import { mrwatchesHandler } from './crawlers/mrwatches.js';
+import { watchclubHandler } from './crawlers/watchclub.js';
 import { subdialHandler } from './crawlers/subdial.js';
 import { tropicalwatchHandler } from './crawlers/tropicalwatch.js';
 import { watchboxHandler } from './crawlers/watchbox.js';
@@ -197,8 +204,8 @@ async function runBatch(): Promise<void> {
                     case 'subdial':
                         listings = await subdialHandler(ctx, maxListingsPerRefPerPlatform);
                         break;
-                    case 'mrwatches':
-                        listings = await mrwatchesHandler(ctx, maxListingsPerRefPerPlatform);
+                    case 'watchclub':
+                        listings = await watchclubHandler(ctx, maxListingsPerRefPerPlatform);
                         break;
                     case 'yahoojp':
                         listings = await yahoojpHandler(ctx, maxListingsPerRefPerPlatform);
@@ -248,26 +255,55 @@ async function runBatch(): Promise<void> {
         });
     }
 
+    // --- Annotate country before aggregation so cross_country_pair mode has data ---
+    const enriched = annotateCountries(filtered);
+
     // --- Aggregate + detect spreads on FILTERED listings ---
-    const { stats } = aggregate(filtered);
-    const opportunities = detectOpportunities(filtered, stats, minSpreadPct, priceCeilings);
+    const { stats } = aggregate(enriched);
+    const opportunities = detectOpportunities(enriched, stats, minSpreadPct, priceCeilings);
+
+    // --- Cross-country spreads (always computed; only alerted in cross_country_pair mode) ---
+    const compareMode = input.compare_mode ?? 'cross_platform_global';
+    const refsWithData = Array.from(new Set(enriched.map((l) => l.ref)));
+    const allCrossCountry = refsWithData.flatMap((r) => computeCrossCountrySpread(enriched, r));
+    // Keep only spreads that meet the user's sensitivity threshold (same %, simpler UX).
+    const significantCrossCountry = allCrossCountry.filter((s) => s.gap_pct >= minSpreadPct);
+    // Top-1 widest gap per ref → avoids spamming Telegram with every country pair.
+    const topPerRef = new Map<string, (typeof significantCrossCountry)[number]>();
+    for (const s of significantCrossCountry) {
+        const cur = topPerRef.get(s.ref);
+        if (!cur || s.gap_pct > cur.gap_pct) topPerRef.set(s.ref, s);
+    }
+    const crossCountryAlerts = Array.from(topPerRef.values());
 
     await Actor.setValue('MARKET_SNAPSHOT', stats);
     await Actor.setValue('ARBITRAGE_OPPORTUNITIES', opportunities);
+    await Actor.setValue('CROSS_COUNTRY_SPREADS', allCrossCountry);
 
     log.info(`Aggregation done`, {
         refs_with_data: stats.length,
         opportunities_detected: opportunities.length,
+        cross_country_spreads_all: allCrossCountry.length,
+        cross_country_alerts_top: crossCountryAlerts.length,
+        compare_mode: compareMode,
     });
 
     // --- Dispatch alerts ---
-    // Email removed in 0.1.18 (see alerts.ts comment). Pass undefined to keep
-    // AlertConfig shape stable; AlertConfig.email becomes a no-op.
-    const alertResult = await dispatchAlerts(opportunities, {
+    // Mode dictates which alert pipeline runs. `cross_platform_global` is the
+    // default and matches v0.1 behavior; `cross_country_pair` uses the new
+    // country-aware format. `per_country` is reserved for v0.3.
+    const alertConfig = {
         telegramBotToken: input.alert_telegram_bot_token,
         telegramChatId: input.alert_telegram_chat_id,
         email: undefined,
-    });
+    };
 
-    log.info(`Alerts dispatched`, alertResult);
+    if (compareMode === 'cross_country_pair') {
+        const alertResult = await dispatchCrossCountryAlerts(crossCountryAlerts, alertConfig);
+        log.info(`Cross-country alerts dispatched`, alertResult);
+    } else {
+        // Default: cross_platform_global (also covers per_country until v0.3 ships).
+        const alertResult = await dispatchAlerts(opportunities, alertConfig);
+        log.info(`Alerts dispatched`, alertResult);
+    }
 }

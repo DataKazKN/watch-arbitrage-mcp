@@ -9,8 +9,19 @@
  * (private group flex). Email is the digest fallback for end-of-day summaries.
  */
 import { Actor, log } from 'apify';
-import type { ArbitrageOpportunity } from './types.js';
+import { COUNTRY_LABEL } from './types.js';
+import type { ArbitrageOpportunity, CrossCountrySpread } from './types.js';
 import { brandLabel, platformLabel } from './utils/brand.js';
+
+const COUNTRY_EMOJI: Record<string, string> = {
+    US: '🇺🇸',
+    UK: '🇬🇧',
+    DE: '🇩🇪',
+    CH: '🇨🇭',
+    EU: '🇪🇺',
+    JP: '🇯🇵',
+    HK: '🇭🇰',
+};
 
 const ALERT_DEDUP_WINDOW_MS = 24 * 60 * 60 * 1000;
 
@@ -53,6 +64,42 @@ function formatTelegramMessage(op: ArbitrageOpportunity): string {
         `_Asking price excl. shipping, taxes, customs (varies by buyer location)._`,
         ``,
         `[View listing](${op.listing.listing_url})`,
+    ]
+        .filter(Boolean)
+        .join('\n');
+}
+
+/**
+ * Cross-country spread alert — frames the opportunity as a buy-here / sell-there
+ * pair across geographic markets. Example:
+ *
+ *   "5711/1A — 🇯🇵 JP $148,200 ↔ 🇺🇸 US $192,500 · gap $44,300 (22.7%)"
+ *
+ * Better mental model for pro dealers who already source globally and want a
+ * routing decision (which country to buy from, which to sell into).
+ */
+function formatCrossCountryMessage(s: CrossCountrySpread): string {
+    const brand = brandLabel(s.brand);
+    const fromEmoji = COUNTRY_EMOJI[s.from.country] ?? '🌍';
+    const toEmoji = COUNTRY_EMOJI[s.to.country] ?? '🌍';
+    const fromLabel = COUNTRY_LABEL[s.from.country] ?? s.from.country;
+    const toLabel = COUNTRY_LABEL[s.to.country] ?? s.to.country;
+    return [
+        `*Cross-country spread*`,
+        `${brand} — \`${s.ref}\``,
+        ``,
+        `${fromEmoji} *Buy* in ${fromLabel}: $${s.from.cheapest_price_usd.toLocaleString()}`,
+        `   ↳ ${platformLabel(s.from.listing.platform)}${s.from.listing.dealer ? ` · ${s.from.listing.dealer}` : ''}`,
+        ``,
+        `${toEmoji} *Sell* into ${toLabel} at: $${s.to.cheapest_price_usd.toLocaleString()}`,
+        `   ↳ comparison: ${platformLabel(s.to.listing.platform)}`,
+        ``,
+        `*Gap*: +$${s.gap_usd.toLocaleString()} · \`${s.gap_pct}%\``,
+        ``,
+        `_Gross figures · excludes shipping, customs, FX execution, dealer margin._`,
+        ``,
+        `[Buy listing](${s.from.listing.listing_url})`,
+        `[Comparison listing](${s.to.listing.listing_url})`,
     ]
         .filter(Boolean)
         .join('\n');
@@ -119,4 +166,54 @@ export async function dispatchAlerts(
     }
 
     return { telegram_sent: telegramSent, email_sent: emailSent, rate_limited: rateLimited };
+}
+
+/**
+ * Cross-country alert dispatcher — used when `compare_mode === 'cross_country_pair'`.
+ *
+ * Same dedup window as `dispatchAlerts()` (24h per ref) so a single ref doesn't
+ * spam Telegram with every country pair every run. Caller is expected to pass
+ * the top-N spreads per ref (typically just the #1 widest gap).
+ */
+export async function dispatchCrossCountryAlerts(
+    spreads: CrossCountrySpread[],
+    config: AlertConfig,
+): Promise<{ telegram_sent: number; rate_limited: number }> {
+    let telegramSent = 0;
+    let rateLimited = 0;
+
+    const fresh: CrossCountrySpread[] = [];
+    for (const s of spreads) {
+        const ok = await shouldSend(s.ref);
+        if (!ok) {
+            rateLimited += 1;
+            continue;
+        }
+        fresh.push(s);
+    }
+
+    if (config.telegramBotToken && config.telegramChatId) {
+        for (const s of fresh) {
+            try {
+                await sendTelegram(
+                    config.telegramBotToken,
+                    config.telegramChatId,
+                    formatCrossCountryMessage(s),
+                );
+                await markSent(s.ref);
+                telegramSent += 1;
+                const r = await Actor.charge({ eventName: 'spread-alert-triggered' }).catch(() => null);
+                if (r?.eventChargeLimitReached) {
+                    log.warning(
+                        'User spending limit reached on spread-alert-triggered. Stopping further alerts.',
+                    );
+                    break;
+                }
+            } catch (err) {
+                log.error(`Telegram send failed for cross-country ref=${s.ref}`, { err: String(err) });
+            }
+        }
+    }
+
+    return { telegram_sent: telegramSent, rate_limited: rateLimited };
 }

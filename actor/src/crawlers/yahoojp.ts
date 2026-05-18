@@ -5,12 +5,19 @@
  * hardening per platform = separate PR. This is the most complex of the
  * 7 beta sources because:
  *   1. Auction format vs Buy-It-Now (即決) need different price extraction
- *   2. JPY currency (needs fx.ts update for JPY → USD)
+ *   2. JPY currency (fx.ts now handles ¥/￥/円/万 multiplier as of 2026-05-17)
  *   3. Bilingual JP/EN listings (titles in JP; ref numbers in latin chars)
  *   4. Anti-scraping more aggressive than Western sites
  *
+ * ⚠️ GEO-BLOCK: Yahoo Japan refuses traffic from EEA/UK IPs since 2022-04-06
+ *    (LINEヤフー regulatory notice). When running this actor, the proxy MUST
+ *    route through a non-EEA region — JP is best (auto-handles ¥ formatting
+ *    + auction filters), US works too. Configure via input proxyConfiguration:
+ *      apifyProxyCountry: 'JP'   // or 'US' / 'AU' / 'CA' — any non-EEA
+ *    Default Apify proxy may route through EU and return the geo-block notice.
+ *
  * Verified URL: https://auctions.yahoo.co.jp/jp/search/keyword/patek%20philippe%205711?p=patek%20philippe%205711
- * Verified DOM: PENDING.
+ * Verified DOM: PENDING — operator to provide JP-proxied HTML capture in v0.3.
  *
  * Output strategy: only count listings with 即決 (Buy-It-Now) prices.
  * Current auction bid prices fluctuate and don't represent stable spread data.

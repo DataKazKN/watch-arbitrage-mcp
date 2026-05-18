@@ -95,8 +95,8 @@ export function platformLabel(platform: Platform): string {
             return 'Tropical Watch';
         case 'subdial':
             return 'Subdial';
-        case 'mrwatches':
-            return 'MR Watches HK';
+        case 'watchclub':
+            return 'The Watch Club (London)';
         case 'yahoojp':
             return 'Yahoo Auctions Japan';
         default: {
