@@ -170,7 +170,7 @@
         "platforms": {
             "title": "Marketplaces to monitor",
             "type": "array",
-            "description": "Uncheck a marketplace to skip it. <b>Beta sources</b> (Wempe → Yahoo JP) have URL builders shipped but DOM extraction is still being hardened — opt in once we publish v0.2 per source.",
+            "description": "Uncheck a marketplace to skip it. The Watch Club (UK/HK office) shipped with verified DOM v1. Yahoo Auctions Japan requires <code>apifyProxyCountry: 'JP'</code> at runtime — Yahoo geo-blocks EEA/UK traffic.",
             "editor": "select",
             "items": {
                 "type": "string",
@@ -182,11 +182,6 @@
                     "europeanwatch",
                     "watchesofswitzerland",
                     "hodinkee",
-                    "wempe",
-                    "govberg",
-                    "crownandcaliber",
-                    "tropicalwatch",
-                    "subdial",
                     "watchclub",
                     "yahoojp"
                 ],
@@ -198,13 +193,8 @@
                     "🇺🇸 European Watch Company",
                     "🇬🇧 Watches of Switzerland",
                     " ",
-                    "🇩🇪 Wempe (beta)",
-                    "🇺🇸 Govberg (beta)",
-                    "🇺🇸 Crown & Caliber (beta)",
-                    "🇺🇸 Tropical Watch — Miami (beta)",
-                    "🇬🇧 Subdial — UK (beta)",
-                    "🇬🇧 The Watch Club — London / HK office (beta)",
-                    "🇯🇵 Yahoo Auctions Japan (beta)"
+                    "🇬🇧 The Watch Club — London / HK office",
+                    "🇯🇵 Yahoo Auctions Japan (requires non-EEA proxy)"
                 ]
             },
             "uniqueItems": true,
@@ -217,7 +207,7 @@
                 "watchesofswitzerland"
             ],
             "sectionCaption": "⚙️ Advanced — Platforms & cost",
-            "sectionDescription": "6 production sources by default. Beta sources (Wempe → Yahoo JP) ship with URL builders but the DOM extraction is hardening per source — toggle on at your own discretion."
+            "sectionDescription": "6 production sources by default. The Watch Club + Yahoo JP available as opt-in extras."
         },
 
         "price_ceilings": {

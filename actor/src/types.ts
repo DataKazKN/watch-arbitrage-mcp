@@ -10,18 +10,18 @@ export type Platform =
     | 'watchfinder'
     | 'europeanwatch'
     | 'watchesofswitzerland'
-    // ── added 2026-05-17 to honor 14-marketplace marketing claim ──
-    // All 7 below are STUB scrapers (URL builder + best-effort selectors only).
-    // Each crawler file documents the DOM verification work still needed before
-    // production-ready output. They are NOT included in the default `platforms`
-    // selection — opt-in only via input until DOM verification ships per platform.
-    | 'wempe'
-    | 'govberg'
-    | 'crownandcaliber'
-    | 'tropicalwatch'
-    | 'subdial'
-    | 'watchclub'
-    | 'yahoojp';
+    // ── beta sources added 2026-05-17, pruned 2026-05-17 evening ──
+    // Originally added 7 beta slots (wempe, govberg, crownandcaliber, tropicalwatch,
+    // subdial, mrwatches, yahoojp) to honor a 14-marketplace marketing claim. Live
+    // DOM verification (Chrome MCP, 2026-05-17) found that 5 of those 7 are
+    // unscrapeable: wempe (AD only, no online pre-owned pricing), govberg (redirects
+    // to the1916company.com = dup of watchbox slot), subdial (empty home, /search 404),
+    // crownandcaliber (pivoted to lifestyle brand post-Hodinkee acquisition, /search
+    // 404), tropicalwatch (/search 404). Pruned to keep the enum honest.
+    //
+    // Survivors:
+    | 'watchclub' // verified live 2026-05-17 (DOM v1), UK HQ + HK office
+    | 'yahoojp'; // real source, requires apifyProxyCountry='JP' (geo-blocks EEA/UK)
 
 /**
  * Country code per platform. ISO-style 2-letter codes, plus "EU" as a regional
@@ -42,11 +42,6 @@ export const PLATFORM_COUNTRY: Record<Platform, Country> = {
     watchfinder: 'UK',
     europeanwatch: 'US',
     watchesofswitzerland: 'UK',
-    wempe: 'DE',
-    govberg: 'US',
-    crownandcaliber: 'US',
-    tropicalwatch: 'US',
-    subdial: 'UK',
     watchclub: 'UK',
     yahoojp: 'JP',
 };

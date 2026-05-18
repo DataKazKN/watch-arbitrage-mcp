@@ -84,17 +84,7 @@ export function platformLabel(platform: Platform): string {
             return 'Watches of Switzerland';
         case 'hodinkee':
             return 'Hodinkee Shop';
-        // ── beta v0.2 sources (added 2026-05-17) ──
-        case 'wempe':
-            return 'Wempe';
-        case 'govberg':
-            return 'Govberg';
-        case 'crownandcaliber':
-            return 'Crown & Caliber';
-        case 'tropicalwatch':
-            return 'Tropical Watch';
-        case 'subdial':
-            return 'Subdial';
+        // ── extra sources (added 2026-05-17) ──
         case 'watchclub':
             return 'The Watch Club (London)';
         case 'yahoojp':

@@ -33,19 +33,7 @@ import type { Platform } from '../types.js';
  * - watchesofswitzerland: en-int locale serves globally without UK geo-block.
  *   Patek pricing is hidden ("price on request") on this site so Patek refs
  *   often return 0; Rolex/AP works.
- * - wempe (beta, added 2026-05-17): German luxury retailer, /uk/ locale exposes
- *   pre-owned grid at /uk/luxury-watches/pre-owned with a search at
- *   /uk/search?q={query}. DOM verification pending.
- * - govberg (beta, added 2026-05-17): nominally part of The 1916 Company group
- *   but keeps a separate Govberg-branded surface at govbergwatches.com with its
- *   own search at /search?q={query}. May overlap with watchbox inventory.
- * - crownandcaliber (beta, added 2026-05-17): part of Hodinkee group since 2020,
- *   still serves its own pre-owned grid at /shop/search?q={query}.
- * - tropicalwatch (beta, added 2026-05-17): Miami-based vintage specialist, very
- *   different inventory mix (vintage Rolex / Patek). Search at /search?q={query}.
- * - subdial (beta, added 2026-05-17): UK indie pre-owned, Shopify-style storefront.
- *   Search at /search?q={query}.
- * - watchclub (beta, added 2026-05-17, was `mrwatches` before live verification):
+ * - watchclub (added 2026-05-17, verified DOM v1):
  *   The Watch Club London — UK-headquartered pre-owned dealer with a Hong Kong
  *   office (verified live 2026-05-17). Search endpoint is broken; we hit brand
  *   grid pages /patek-philippe, /rolex, /audemars-piguet and let the crawler
@@ -176,28 +164,7 @@ function buildSingleSearchUrl(platform: Platform, ref: string): string {
             // en-int locale serves globally without UK geo-block; auto-routes to USD.
             return `https://www.watchesofswitzerland.com/en-int/search?q=${q}`;
 
-        // ── beta v0.2 sources (added 2026-05-17) ──
-        case 'wempe':
-            // /uk/ exposes English UI + £/$ pricing; search route confirmed manually.
-            return `https://www.wempe.com/uk/search?q=${q}`;
-
-        case 'govberg':
-            // Govberg-branded surface (separate from WatchBox/1916 catalog).
-            return `https://www.govbergwatches.com/search?q=${q}`;
-
-        case 'crownandcaliber':
-            // Crown & Caliber retains its own /shop/search route despite Hodinkee
-            // ownership. Inventory may overlap with Hodinkee Shop on some weeks.
-            return `https://www.crownandcaliber.com/search?q=${q}`;
-
-        case 'tropicalwatch':
-            // Miami vintage specialist. Shopify storefront.
-            return `https://www.tropicalwatch.com/search?q=${q}&type=product`;
-
-        case 'subdial':
-            // UK indie pre-owned. Shopify storefront.
-            return `https://subdial.com/search?q=${q}&type=product`;
-
+        // ── extra sources (added 2026-05-17) ──
         case 'watchclub': {
             // /search?q= returns 404 — use brand grid pages instead.
             const r2 = ref.toLowerCase();
