@@ -11,9 +11,13 @@
  * 1 outlier $200K listing on Hodinkee shouldn't move the threshold for
  * everybody else.
  */
+import { PLATFORM_COUNTRY } from './types.js';
 import type {
     ArbitrageOpportunity,
     BoxPapersStatus,
+    Country,
+    CountryQuote,
+    CrossCountrySpread,
     Listing,
     Platform,
     PriceCeiling,
@@ -22,6 +26,78 @@ import type {
     WatchCondition,
 } from './types.js';
 import { detectBrand } from './utils/brand.js';
+
+/** Annotate each listing with its inventory-country (stable, derived from platform). */
+export function annotateCountries(listings: Listing[]): Listing[] {
+    return listings.map((l) => ({ ...l, country: PLATFORM_COUNTRY[l.platform] }));
+}
+
+/**
+ * Compute cross-country arbitrage spreads for a single reference.
+ *
+ * Groups listings by country, picks the cheapest listing per country, then
+ * produces every (from, to) country pair sorted by gap_pct descending.
+ *
+ * Caller can take the top-1 pair as the alert, or surface all pairs to a
+ * dashboard.
+ */
+export function computeCrossCountrySpread(
+    listings: readonly Listing[],
+    ref: string,
+): CrossCountrySpread[] {
+    const refListings = listings.filter((l) => l.ref === ref && l.price_usd > 0);
+    if (refListings.length < 2) return [];
+
+    // 1. group by country, take cheapest per country
+    const byCountry = new Map<Country, { cheapest: Listing; count: number }>();
+    for (const l of refListings) {
+        const c = l.country ?? PLATFORM_COUNTRY[l.platform];
+        const cur = byCountry.get(c);
+        if (!cur || l.price_usd < cur.cheapest.price_usd) {
+            byCountry.set(c, { cheapest: l, count: (cur?.count ?? 0) + 1 });
+        } else {
+            byCountry.set(c, { cheapest: cur.cheapest, count: cur.count + 1 });
+        }
+    }
+    if (byCountry.size < 2) return [];
+
+    const quotes: CountryQuote[] = Array.from(byCountry.entries()).map(([country, v]) => ({
+        country,
+        cheapest_price_usd: v.cheapest.price_usd,
+        listing: v.cheapest,
+        sample_size: v.count,
+    }));
+
+    // 2. produce all unordered pairs where `from` is cheaper than `to`
+    const brand = detectBrand(ref);
+    const detected = new Date().toISOString();
+    const pairs: CrossCountrySpread[] = [];
+
+    for (let i = 0; i < quotes.length; i++) {
+        for (let j = 0; j < quotes.length; j++) {
+            if (i === j) continue;
+            const a = quotes[i];
+            const b = quotes[j];
+            if (a.cheapest_price_usd >= b.cheapest_price_usd) continue;
+            const gap = b.cheapest_price_usd - a.cheapest_price_usd;
+            const pct = (gap / b.cheapest_price_usd) * 100;
+            pairs.push({
+                ref,
+                brand,
+                from: a,
+                to: b,
+                gap_usd: Math.round(gap),
+                gap_pct: Math.round(pct * 10) / 10,
+                detected_at: detected,
+            });
+        }
+    }
+
+    // 3. sort by gap_pct descending — biggest opportunities first
+    pairs.sort((a, b) => b.gap_pct - a.gap_pct);
+
+    return pairs;
+}
 
 /** Normalize raw condition string from crawlers into the v2 enum. */
 export function normalizeCondition(raw: string): WatchCondition {

@@ -33,6 +33,23 @@ import type { Platform } from '../types.js';
  * - watchesofswitzerland: en-int locale serves globally without UK geo-block.
  *   Patek pricing is hidden ("price on request") on this site so Patek refs
  *   often return 0; Rolex/AP works.
+ * - wempe (beta, added 2026-05-17): German luxury retailer, /uk/ locale exposes
+ *   pre-owned grid at /uk/luxury-watches/pre-owned with a search at
+ *   /uk/search?q={query}. DOM verification pending.
+ * - govberg (beta, added 2026-05-17): nominally part of The 1916 Company group
+ *   but keeps a separate Govberg-branded surface at govbergwatches.com with its
+ *   own search at /search?q={query}. May overlap with watchbox inventory.
+ * - crownandcaliber (beta, added 2026-05-17): part of Hodinkee group since 2020,
+ *   still serves its own pre-owned grid at /shop/search?q={query}.
+ * - tropicalwatch (beta, added 2026-05-17): Miami-based vintage specialist, very
+ *   different inventory mix (vintage Rolex / Patek). Search at /search?q={query}.
+ * - subdial (beta, added 2026-05-17): UK indie pre-owned, Shopify-style storefront.
+ *   Search at /search?q={query}.
+ * - mrwatches (beta, added 2026-05-17): Hong Kong dealer, HKD pricing. URL at
+ *   /search?q={query}. Currency parsing requires HKD → USD support in fx.ts.
+ * - yahoojp (beta, added 2026-05-17): Yahoo Auctions Japan. JPY pricing and
+ *   bilingual JP/EN listings. URL builder uses the keyword search route
+ *   /jp/search/keyword/{q}. Auction-format vs Buy-It-Now needs special handling.
  */
 
 function encodeRef(ref: string): string {
@@ -155,6 +172,37 @@ function buildSingleSearchUrl(platform: Platform, ref: string): string {
         case 'watchesofswitzerland':
             // en-int locale serves globally without UK geo-block; auto-routes to USD.
             return `https://www.watchesofswitzerland.com/en-int/search?q=${q}`;
+
+        // ── beta v0.2 sources (added 2026-05-17) ──
+        case 'wempe':
+            // /uk/ exposes English UI + £/$ pricing; search route confirmed manually.
+            return `https://www.wempe.com/uk/search?q=${q}`;
+
+        case 'govberg':
+            // Govberg-branded surface (separate from WatchBox/1916 catalog).
+            return `https://www.govbergwatches.com/search?q=${q}`;
+
+        case 'crownandcaliber':
+            // Crown & Caliber retains its own /shop/search route despite Hodinkee
+            // ownership. Inventory may overlap with Hodinkee Shop on some weeks.
+            return `https://www.crownandcaliber.com/search?q=${q}`;
+
+        case 'tropicalwatch':
+            // Miami vintage specialist. Shopify storefront.
+            return `https://www.tropicalwatch.com/search?q=${q}&type=product`;
+
+        case 'subdial':
+            // UK indie pre-owned. Shopify storefront.
+            return `https://subdial.com/search?q=${q}&type=product`;
+
+        case 'mrwatches':
+            // Hong Kong dealer. HKD pricing — currency conversion handled in fx.ts.
+            return `https://www.mrwatches.com.hk/search?q=${q}`;
+
+        case 'yahoojp':
+            // Yahoo Auctions JP keyword search. Returns auction-format + Buy-It-Now
+            // mixed. Crawler will need to filter on 即決 (buy-now) for stable prices.
+            return `https://auctions.yahoo.co.jp/jp/search/keyword/${q}?p=${q}`;
 
         default: {
             // Exhaustiveness guard — TS prevents unknown `platform` at compile time.

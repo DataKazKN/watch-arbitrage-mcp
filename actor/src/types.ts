@@ -9,7 +9,57 @@ export type Platform =
     | 'hodinkee'
     | 'watchfinder'
     | 'europeanwatch'
-    | 'watchesofswitzerland';
+    | 'watchesofswitzerland'
+    // ── added 2026-05-17 to honor 14-marketplace marketing claim ──
+    // All 7 below are STUB scrapers (URL builder + best-effort selectors only).
+    // Each crawler file documents the DOM verification work still needed before
+    // production-ready output. They are NOT included in the default `platforms`
+    // selection — opt-in only via input until DOM verification ships per platform.
+    | 'wempe'
+    | 'govberg'
+    | 'crownandcaliber'
+    | 'tropicalwatch'
+    | 'subdial'
+    | 'mrwatches'
+    | 'yahoojp';
+
+/**
+ * Country code per platform. ISO-style 2-letter codes, plus "EU" as a regional
+ * catch-all for platforms with cross-EU presence. Derived statically from the
+ * platform identity (where the platform's primary inventory resides), not from
+ * per-listing seller geo (which would require detail-page scraping).
+ *
+ * Used by `computeCrossCountrySpread()` to produce country-pair arbitrage
+ * opportunities ("Tokyo $148.2k ↔ Brooklyn $192.5k").
+ */
+export type Country = 'US' | 'UK' | 'DE' | 'CH' | 'EU' | 'JP' | 'HK';
+
+export const PLATFORM_COUNTRY: Record<Platform, Country> = {
+    chrono24: 'EU',
+    watchbox: 'US',
+    bobs: 'US',
+    hodinkee: 'US',
+    watchfinder: 'UK',
+    europeanwatch: 'US',
+    watchesofswitzerland: 'UK',
+    wempe: 'DE',
+    govberg: 'US',
+    crownandcaliber: 'US',
+    tropicalwatch: 'US',
+    subdial: 'UK',
+    mrwatches: 'HK',
+    yahoojp: 'JP',
+};
+
+export const COUNTRY_LABEL: Record<Country, string> = {
+    US: 'United States',
+    UK: 'United Kingdom',
+    DE: 'Germany',
+    CH: 'Switzerland',
+    EU: 'Europe',
+    JP: 'Japan',
+    HK: 'Hong Kong',
+};
 
 export type Brand = 'patek-philippe' | 'rolex' | 'audemars-piguet' | 'unknown';
 
@@ -56,12 +106,24 @@ export interface ActorInput {
     filter_box_papers?: BoxPapersStatus[];
     strict_condition_matching?: boolean;
     proxyConfiguration?: ProxyConfigurationInput;
+    /** Alert framing strategy.
+     *  - `cross_platform_global` (default): single cross-platform median, alert
+     *    when any listing breaks below by `spread_sensitivity` %.
+     *  - `cross_country_pair`: surface country-pair gaps ("JP $148k ↔ US $192k").
+     *    Better for pro dealers who already know about the gap and want explicit
+     *    pair-by-pair routing decisions.
+     *  - `per_country`: per-country median + alert when a listing breaks below
+     *    its own country's median (rare; useful for local-market specialists). */
+    compare_mode?: 'cross_platform_global' | 'cross_country_pair' | 'per_country';
 }
 
 export interface Listing {
     ref: string;
     brand: Brand;
     platform: Platform;
+    /** Country derived from `PLATFORM_COUNTRY[platform]` at aggregator time. Stable
+     *  inventory-country, not per-listing seller geo. */
+    country?: Country;
     title: string;
     price_usd: number;
     price_orig: number;
@@ -74,6 +136,33 @@ export interface Listing {
     year: number | null;
     location: string;
     scraped_at: string;
+}
+
+/**
+ * One side of a cross-country arbitrage pair: the cheapest listing for a given
+ * `(reference, country)` combination after condition filtering.
+ */
+export interface CountryQuote {
+    country: Country;
+    cheapest_price_usd: number;
+    listing: Listing;
+    sample_size: number;
+}
+
+/**
+ * Cross-country arbitrage opportunity: the gap between the cheapest listing in
+ * country `from` and the cheapest listing in country `to`, for the same reference
+ * and condition class. Used in alert messages like
+ *   "5711/1A — JP $148,200 ↔ US $192,500 (22.7% spread)".
+ */
+export interface CrossCountrySpread {
+    ref: string;
+    brand: Brand;
+    from: CountryQuote;
+    to: CountryQuote;
+    gap_usd: number;
+    gap_pct: number;
+    detected_at: string;
 }
 
 export interface RefStats {

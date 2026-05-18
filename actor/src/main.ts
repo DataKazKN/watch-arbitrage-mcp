@@ -28,11 +28,18 @@ import { aggregate, applyFilters, detectOpportunities, filterByRefMatch } from '
 import { dispatchAlerts } from './alerts.js';
 import { bobsHandler } from './crawlers/bobs.js';
 import { chrono24Handler } from './crawlers/chrono24.js';
+import { crownandcaliberHandler } from './crawlers/crownandcaliber.js';
 import { europeanwatchHandler } from './crawlers/europeanwatch.js';
+import { govbergHandler } from './crawlers/govberg.js';
 import { hodinkeeHandler } from './crawlers/hodinkee.js';
+import { mrwatchesHandler } from './crawlers/mrwatches.js';
+import { subdialHandler } from './crawlers/subdial.js';
+import { tropicalwatchHandler } from './crawlers/tropicalwatch.js';
 import { watchboxHandler } from './crawlers/watchbox.js';
 import { watchesofswitzerlandHandler } from './crawlers/watchesofswitzerland.js';
 import { watchfinderHandler } from './crawlers/watchfinder.js';
+import { wempeHandler } from './crawlers/wempe.js';
+import { yahoojpHandler } from './crawlers/yahoojp.js';
 import type { ActorInput, Listing, Platform } from './types.js';
 import { buildSearchUrls } from './utils/url.js';
 
@@ -173,6 +180,28 @@ async function runBatch(): Promise<void> {
                         break;
                     case 'watchesofswitzerland':
                         listings = await watchesofswitzerlandHandler(ctx, maxListingsPerRefPerPlatform);
+                        break;
+                    // ── beta v0.2 sources (added 2026-05-17) ──
+                    case 'wempe':
+                        listings = await wempeHandler(ctx, maxListingsPerRefPerPlatform);
+                        break;
+                    case 'govberg':
+                        listings = await govbergHandler(ctx, maxListingsPerRefPerPlatform);
+                        break;
+                    case 'crownandcaliber':
+                        listings = await crownandcaliberHandler(ctx, maxListingsPerRefPerPlatform);
+                        break;
+                    case 'tropicalwatch':
+                        listings = await tropicalwatchHandler(ctx, maxListingsPerRefPerPlatform);
+                        break;
+                    case 'subdial':
+                        listings = await subdialHandler(ctx, maxListingsPerRefPerPlatform);
+                        break;
+                    case 'mrwatches':
+                        listings = await mrwatchesHandler(ctx, maxListingsPerRefPerPlatform);
+                        break;
+                    case 'yahoojp':
+                        listings = await yahoojpHandler(ctx, maxListingsPerRefPerPlatform);
                         break;
                 }
             } catch (err) {
