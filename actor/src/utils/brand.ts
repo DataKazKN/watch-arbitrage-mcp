@@ -89,6 +89,10 @@ export function platformLabel(platform: Platform): string {
             return 'The Watch Club (London)';
         case 'yahoojp':
             return 'Yahoo Auctions Japan';
+        case 'spliedt':
+            return 'H. Spliedt (Germany)';
+        case 'acollectedman':
+            return 'A Collected Man (London)';
         default: {
             const exhaustive: never = platform;
             return String(exhaustive);

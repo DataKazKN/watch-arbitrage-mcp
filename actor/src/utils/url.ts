@@ -33,6 +33,13 @@ import type { Platform } from '../types.js';
  * - watchesofswitzerland: en-int locale serves globally without UK geo-block.
  *   Patek pricing is hidden ("price on request") on this site so Patek refs
  *   often return 0; Rolex/AP works.
+ * - spliedt (added 2026-05-17 evening, verified DOM v1): H. Spliedt, Munich/
+ *   Hamburg/Sylt premium pre-owned. Shopify collection grid at /collections/
+ *   {brand-slug}. EUR pricing ("€85.000,00" EU-decimal format). 19+ Patek
+ *   listings live on /collections/patek-philippe at verification time.
+ * - acollectedman (added 2026-05-17 evening, verified DOM v1): A Collected Man
+ *   London — premium pre-owned + archive (222 Patek products listed though
+ *   most marked "Sold"; crawler filters Sold cards). GBP pricing.
  * - watchclub (added 2026-05-17, verified DOM v1):
  *   The Watch Club London — UK-headquartered pre-owned dealer with a Hong Kong
  *   office (verified live 2026-05-17). Search endpoint is broken; we hit brand
@@ -165,6 +172,30 @@ function buildSingleSearchUrl(platform: Platform, ref: string): string {
             return `https://www.watchesofswitzerland.com/en-int/search?q=${q}`;
 
         // ── extra sources (added 2026-05-17) ──
+        case 'spliedt': {
+            // Shopify collection page per brand; search?q= falls back to brand grid.
+            const r2 = ref.toLowerCase();
+            if (/^57|^58|^59|^5[0-9]{3}|nautilus|aquanaut|calatrava|grand[-\s]?complication/.test(r2)) {
+                return 'https://www.spliedt.de/collections/patek-philippe';
+            }
+            if (/royal\s*oak|royaloak|^15\d{3}|^26\d{3}|^77\d{3}/.test(r2)) {
+                return 'https://www.spliedt.de/collections/audemars-piguet';
+            }
+            return 'https://www.spliedt.de/collections/rolex';
+        }
+
+        case 'acollectedman': {
+            // Shopify collection page per brand. Crawler filters out Sold cards.
+            const r2 = ref.toLowerCase();
+            if (/^57|^58|^59|^5[0-9]{3}|nautilus|aquanaut|calatrava|grand[-\s]?complication/.test(r2)) {
+                return 'https://www.acollectedman.com/collections/patek-philippe';
+            }
+            if (/royal\s*oak|royaloak|^15\d{3}|^26\d{3}|^77\d{3}/.test(r2)) {
+                return 'https://www.acollectedman.com/collections/audemars-piguet';
+            }
+            return 'https://www.acollectedman.com/collections/rolex';
+        }
+
         case 'watchclub': {
             // /search?q= returns 404 — use brand grid pages instead.
             const r2 = ref.toLowerCase();

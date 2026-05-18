@@ -21,7 +21,10 @@ export type Platform =
     //
     // Survivors:
     | 'watchclub' // verified live 2026-05-17 (DOM v1), UK HQ + HK office
-    | 'yahoojp'; // real source, requires apifyProxyCountry='JP' (geo-blocks EEA/UK)
+    | 'yahoojp' // real source, requires apifyProxyCountry='JP' (geo-blocks EEA/UK)
+    // Round 2 expansion (added 2026-05-17 evening, all live-verified):
+    | 'spliedt' // DE — H. Spliedt, Munich/Hamburg/Sylt pre-owned, Shopify .product-card
+    | 'acollectedman'; // UK — A Collected Man London, premium pre-owned + archive
 
 /**
  * Country code per platform. ISO-style 2-letter codes, plus "EU" as a regional
@@ -44,6 +47,8 @@ export const PLATFORM_COUNTRY: Record<Platform, Country> = {
     watchesofswitzerland: 'UK',
     watchclub: 'UK',
     yahoojp: 'JP',
+    spliedt: 'DE',
+    acollectedman: 'UK',
 };
 
 export const COUNTRY_LABEL: Record<Country, string> = {

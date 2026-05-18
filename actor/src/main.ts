@@ -33,10 +33,12 @@ import {
     filterByRefMatch,
 } from './aggregator.js';
 import { dispatchAlerts, dispatchCrossCountryAlerts } from './alerts.js';
+import { acollectedmanHandler } from './crawlers/acollectedman.js';
 import { bobsHandler } from './crawlers/bobs.js';
 import { chrono24Handler } from './crawlers/chrono24.js';
 import { europeanwatchHandler } from './crawlers/europeanwatch.js';
 import { hodinkeeHandler } from './crawlers/hodinkee.js';
+import { spliedtHandler } from './crawlers/spliedt.js';
 import { watchboxHandler } from './crawlers/watchbox.js';
 import { watchclubHandler } from './crawlers/watchclub.js';
 import { watchesofswitzerlandHandler } from './crawlers/watchesofswitzerland.js';
@@ -189,6 +191,12 @@ async function runBatch(): Promise<void> {
                         break;
                     case 'yahoojp':
                         listings = await yahoojpHandler(ctx, maxListingsPerRefPerPlatform);
+                        break;
+                    case 'spliedt':
+                        listings = await spliedtHandler(ctx, maxListingsPerRefPerPlatform);
+                        break;
+                    case 'acollectedman':
+                        listings = await acollectedmanHandler(ctx, maxListingsPerRefPerPlatform);
                         break;
                 }
             } catch (err) {
