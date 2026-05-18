@@ -16,7 +16,12 @@
  */
 import { describe, expect, it } from 'vitest';
 
-import { buildPriceCeilingMap, detectOpportunities } from '../src/aggregator.js';
+import {
+    annotateCountries,
+    buildPriceCeilingMap,
+    computeCrossCountrySpread,
+    detectOpportunities,
+} from '../src/aggregator.js';
 import type { Listing, RefStats } from '../src/types.js';
 
 function makeListing(overrides: Partial<Listing> = {}): Listing {
@@ -264,5 +269,117 @@ describe('detectOpportunities — anchor routing', () => {
         const ceilingMap = new Map([['5711/1A-010', 185000]]);
         const ops = detectOpportunities(listings, stats, 5, ceilingMap);
         expect(ops).toHaveLength(1);
+    });
+});
+
+// ---------------------------------------------------------------------
+// annotateCountries — derives Country from platform identity
+// ---------------------------------------------------------------------
+
+describe('annotateCountries', () => {
+    it('adds country to every listing based on PLATFORM_COUNTRY map', () => {
+        const listings = [
+            makeListing({ platform: 'bobs' }), // US
+            makeListing({ platform: 'watchfinder' }), // UK
+            makeListing({ platform: 'spliedt' }), // DE
+            makeListing({ platform: 'yahoojp' }), // JP
+            makeListing({ platform: 'analogshift' }), // US
+            makeListing({ platform: 'bachmannscher' }), // DE
+        ];
+        const annotated = annotateCountries(listings);
+        expect(annotated.map((l) => l.country)).toEqual(['US', 'UK', 'DE', 'JP', 'US', 'DE']);
+    });
+
+    it('does not mutate input listings', () => {
+        const listings = [makeListing({ platform: 'bobs' })];
+        const annotated = annotateCountries(listings);
+        expect(listings[0].country).toBeUndefined();
+        expect(annotated[0].country).toBe('US');
+    });
+});
+
+// ---------------------------------------------------------------------
+// computeCrossCountrySpread — pair generation for arbitrage routing
+// ---------------------------------------------------------------------
+
+describe('computeCrossCountrySpread', () => {
+    it('returns empty array when fewer than 2 listings exist for the ref', () => {
+        const listings = annotateCountries([makeListing({ platform: 'yahoojp', price_usd: 148200 })]);
+        const spreads = computeCrossCountrySpread(listings, '5711/1A-010');
+        expect(spreads).toEqual([]);
+    });
+
+    it('returns empty array when all listings are in the same country', () => {
+        const listings = annotateCountries([
+            makeListing({ platform: 'bobs', price_usd: 170000 }),
+            makeListing({ platform: 'watchbox', price_usd: 180000 }),
+            makeListing({ platform: 'hodinkee', price_usd: 192500 }),
+        ]);
+        const spreads = computeCrossCountrySpread(listings, '5711/1A-010');
+        expect(spreads).toEqual([]);
+    });
+
+    it('produces JP↔US cross-country pair with positive gap', () => {
+        const listings = annotateCountries([
+            makeListing({ platform: 'yahoojp', price_usd: 148200, listing_url: 'https://yj.com/a' }),
+            makeListing({ platform: 'bobs', price_usd: 180000, listing_url: 'https://bobs.com/a' }),
+            makeListing({ platform: 'hodinkee', price_usd: 192500, listing_url: 'https://hodinkee.com/a' }),
+        ]);
+        const spreads = computeCrossCountrySpread(listings, '5711/1A-010');
+        const jpUs = spreads.find((s) => s.from.country === 'JP' && s.to.country === 'US');
+        expect(jpUs).toBeDefined();
+        expect(jpUs?.from.cheapest_price_usd).toBe(148200);
+        expect(jpUs?.to.cheapest_price_usd).toBe(180000); // cheapest US, not most expensive
+        expect(jpUs?.gap_usd).toBeCloseTo(31800, 0);
+        expect(jpUs?.gap_pct).toBeCloseTo(17.67, 1);
+    });
+
+    it('picks cheapest listing per country as the quote anchor', () => {
+        const listings = annotateCountries([
+            makeListing({ platform: 'bobs', price_usd: 200000 }),
+            makeListing({ platform: 'watchbox', price_usd: 170000 }), // cheapest US
+            makeListing({ platform: 'hodinkee', price_usd: 195000 }),
+            makeListing({ platform: 'watchfinder', price_usd: 165000 }), // cheapest UK
+            makeListing({ platform: 'acollectedman', price_usd: 175000 }),
+        ]);
+        const spreads = computeCrossCountrySpread(listings, '5711/1A-010');
+        const ukUs = spreads.find((s) => s.from.country === 'UK' && s.to.country === 'US');
+        expect(ukUs?.from.cheapest_price_usd).toBe(165000);
+        expect(ukUs?.to.cheapest_price_usd).toBe(170000);
+    });
+
+    it('sets sample_size to total listings per country, not just the cheapest one', () => {
+        const listings = annotateCountries([
+            makeListing({ platform: 'bobs', price_usd: 170000 }), // US — cheapest
+            makeListing({ platform: 'watchbox', price_usd: 180000 }), // US
+            makeListing({ platform: 'hodinkee', price_usd: 195000 }), // US
+            makeListing({ platform: 'watchfinder', price_usd: 175000 }), // UK — cheapest UK
+        ]);
+        const spreads = computeCrossCountrySpread(listings, '5711/1A-010');
+        // US ($170k) is cheaper than UK ($175k) → pair direction is US → UK.
+        const usUk = spreads.find((s) => s.from.country === 'US' && s.to.country === 'UK');
+        expect(usUk?.from.sample_size).toBe(3);
+        expect(usUk?.to.sample_size).toBe(1);
+    });
+
+    it('does not produce reverse-direction pairs (no JP↔JP, no zero-gap)', () => {
+        const listings = annotateCountries([
+            makeListing({ platform: 'bobs', price_usd: 180000 }),
+            makeListing({ platform: 'watchfinder', price_usd: 175000 }),
+        ]);
+        const spreads = computeCrossCountrySpread(listings, '5711/1A-010');
+        // Only one direction: UK → US (UK is cheaper)
+        expect(spreads).toHaveLength(1);
+        expect(spreads[0].from.country).toBe('UK');
+        expect(spreads[0].to.country).toBe('US');
+    });
+
+    it('filters out listings with price_usd <= 0', () => {
+        const listings = annotateCountries([
+            makeListing({ platform: 'bobs', price_usd: 0 }),
+            makeListing({ platform: 'yahoojp', price_usd: 148200 }),
+        ]);
+        const spreads = computeCrossCountrySpread(listings, '5711/1A-010');
+        expect(spreads).toEqual([]);
     });
 });
