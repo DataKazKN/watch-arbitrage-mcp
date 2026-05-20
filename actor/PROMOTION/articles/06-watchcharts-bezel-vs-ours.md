@@ -137,7 +137,7 @@ Watchcharts has a 4-year head start on these. My tool is 4 weeks old in its curr
 
 - **Watchcharts**: watchcharts.com — free tier, paid is $29/mo
 - **Bezel**: bezel.com — free tier with limits, paid is $20/mo
-- **My Apify actor**: apify.com/kazkn/watch-arbitrage-mcp — free to install, $0.05/ref/day + $0.50/alert
+- **My Apify actor**: https://apify.com/kazkn/watch-arbitrage-mcp?fpr=8fp2od — free to install, $0.05/ref/day + $0.50/alert
 - **My GitHub** (source code): github.com/DataKazKN/watch-arbitrage-mcp
 
 If you build watch-related tools, the source is MIT-licensed — fork or contribute. The most useful PR would be platform #14 (a market I haven't covered yet — recommendations welcome in comments).

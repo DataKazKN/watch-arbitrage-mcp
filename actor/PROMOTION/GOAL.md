@@ -1,6 +1,20 @@
-# GOAL: $50/day Apify revenue (Yorick + Claude autonomous loop)
+# GOAL v2 (updated 2026-05-21): paying customers on BOTH actors
 
-> **Contract**: Claude won't stop iterating on promotion until daily Apify Store revenue for `kazkn/*` actors hits **$50/day average over a rolling 7-day window**. Set 2026-05-20 by Yorick.
+> **Updated contract**: Claude won't stop iterating until **both** `watch-arbitrage-mcp` AND `vinted-smart-scraper` have **at least 1 paying customer** (user with actual PPE charges past Apify's $5/mo free credit). Set 2026-05-21 by Yorick.
+>
+> Secondary metric (kept for reference): $50/day Apify revenue 7-day trailing avg.
+
+## Why the pivot
+
+Vinted has 369 total users but most use it within free tier. The watch-arb actor has 4 users, $0 revenue. Real validation = first paid user on each, not aggregate vanity revenue.
+
+## Detection method
+
+Daily loop queries Apify API for per-actor:
+- `userPaidEvents30Days` (if available) OR
+- `revenue30Days` divided by avg PPE = approx paid-user count
+
+A paying user = someone whose 30-day PPE charges > $0 after their free $5/mo platform credit. Apify dashboard surfaces this under "Revenue by user".
 
 ---
 
