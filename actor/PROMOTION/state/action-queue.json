@@ -1,0 +1,141 @@
+{
+  "queue": [
+    {
+      "day": 1,
+      "category": "A",
+      "action": "publish_article",
+      "spec": {
+        "article_file": "articles/01-patek-5711-cross-platform-data.md",
+        "platforms": ["dev.to"],
+        "canonical": "self",
+        "tags": ["watches", "apify", "scraping", "arbitrage", "data"]
+      },
+      "expected_lift": "+10-50 visitors/article",
+      "cooldown_days": 0
+    },
+    {
+      "day": 2,
+      "category": "B",
+      "action": "x_self_reply",
+      "spec": {
+        "target_tweet": "thread_origin",
+        "body_template": "📝 Just published the full data analysis behind this thread on dev.to → {article_url}\n\nPer-platform median table, JPY-USD FX math, and why the 7 specialist dealers I added matter more than the loud-five US/UK majors."
+      },
+      "expected_lift": "+5-30 X impressions",
+      "cooldown_days": 0
+    },
+    {
+      "day": 2,
+      "category": "C",
+      "action": "linkedin_post",
+      "spec": {
+        "body_file": "articles/01-linkedin-companion.md",
+        "include_article_link": true
+      },
+      "expected_lift": "+50-200 LinkedIn views",
+      "cooldown_days": 0
+    },
+    {
+      "day": 3,
+      "category": "A",
+      "action": "publish_article",
+      "spec": {
+        "article_file": "articles/06-watchcharts-bezel-vs-ours.md",
+        "platforms": ["medium-import-from-devto", "dev.to"],
+        "canonical": "self",
+        "tags": ["watches", "tools", "comparison", "watchcharts", "bezel"]
+      },
+      "expected_lift": "+50-200 visitors (commercial intent)",
+      "cooldown_days": 0
+    },
+    {
+      "day": 4,
+      "category": "B",
+      "action": "x_data_update",
+      "spec": {
+        "body_template": "Last 24h cross-platform spreads detected:\n\n5711/1A — JP→US ${gap1}k\n116500LN — EU→US ${gap2}k\n15500ST — UK→DE ${gap3}k\n\nLargest single spread: ${largest} (ref ${ref}).\n\n→ apify.com/kazkn/watch-arbitrage-mcp"
+      },
+      "expected_lift": "+10-40 X impressions",
+      "cooldown_days": 0
+    },
+    {
+      "day": 5,
+      "category": "D",
+      "action": "apify_store_seo_ab_test",
+      "spec": {
+        "field": "seoDescription",
+        "variant_a": "Patek/Rolex/AP tracker across 13 marketplaces: Chrono24, WatchBox, Watchfinder, Yahoo Japan, Analog:Shift + more. Cross-country spreads via Telegram. Built for pro dealers.",
+        "variant_b": "Watch arbitrage tracker for Patek Philippe, Rolex, AP. Scans 13 dealer marketplaces, alerts on cross-country spreads via Telegram. Pay-Per-Event $0.05/ref/day. Apify Store."
+      },
+      "expected_lift": "TBD via Search Console",
+      "cooldown_days": 0
+    },
+    {
+      "day": 6,
+      "category": "A",
+      "action": "publish_article",
+      "spec": {
+        "article_file": "articles/09-building-the-actor-technical.md",
+        "platforms": ["dev.to"],
+        "canonical": "self",
+        "tags": ["apify", "playwright", "typescript", "scraping", "tutorial"]
+      },
+      "expected_lift": "+100-500 visitors (technical long-tail)",
+      "cooldown_days": 0
+    },
+    {
+      "day": 7,
+      "category": "C",
+      "action": "linkedin_technical_post",
+      "spec": {
+        "body_file": "articles/09-linkedin-companion.md",
+        "include_article_link": true
+      },
+      "expected_lift": "+100-300 LinkedIn views (tech audience)",
+      "cooldown_days": 0
+    },
+    {
+      "day": 8,
+      "category": "B",
+      "action": "x_quote_tweet_thread_origin",
+      "spec": {
+        "calendar_event_id": "m9itt270d3lsn1to7kd625qk1k",
+        "body_options": ["A", "B", "C"]
+      },
+      "expected_lift": "+resurface thread (~30% of original reach)",
+      "cooldown_days": 0
+    },
+    {
+      "day": 9,
+      "category": "G",
+      "action": "submit_awesome_apify_pr",
+      "spec": {
+        "target_repo": "apify/awesome-apify",
+        "watch_arb_listing": "kazkn/watch-arbitrage-mcp",
+        "vinted_listing": "kazkn/vinted-smart-scraper"
+      },
+      "expected_lift": "+5-20 GitHub stars, slow-burn SEO",
+      "cooldown_days": 0
+    },
+    {
+      "day": 10,
+      "category": "H",
+      "action": "weekly_reddit_harvest",
+      "spec": {
+        "subreddits": ["Watches", "PatekPhilippe", "rolex", "Flipping", "Vinted"],
+        "output_path": "state/reddit-weekly-{ISO}.json"
+      },
+      "expected_lift": "feeds next article + newsletter",
+      "cooldown_days": 7
+    }
+  ],
+  "fallback_actions_after_day_10": [
+    "republish_top_article_on_hashnode",
+    "draft_new_article_from_winning_play",
+    "x_data_update",
+    "linkedin_followup",
+    "industry_outreach_email_draft",
+    "youtube_short_script",
+    "github_stars_dm"
+  ]
+}
