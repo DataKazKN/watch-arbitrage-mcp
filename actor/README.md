@@ -1,8 +1,8 @@
 # Watch Arbitrage Tracker (Patek/Rolex/AP)
 
-![Watch Arbitrage Tracker — Spot mispriced Patek, Rolex & AP across 6 marketplaces](https://raw.githubusercontent.com/DataKazKN/watch-arbitrage-mcp/main/actor/assets/screenshots/01-hero.png)
+![Watch Arbitrage Tracker — Spot mispriced Patek, Rolex & AP across 13 marketplaces](https://raw.githubusercontent.com/DataKazKN/watch-arbitrage-mcp/main/actor/assets/screenshots/01-hero.png)
 
-> Cross-platform price arbitrage tool for **professional watch dealers** trading **Patek Philippe**, **Rolex**, and **Audemars Piguet (AP)** across **Chrono24**, **WatchBox** (now part of **The 1916 Company** — the 2024 merger of WatchBox + **Govberg Jewelers** + **Hyde Park Jewelers**), **Bobs Watches**, **Watchfinder UK**, **European Watch Co (Boston)**, and **Watches of Switzerland (Mayors / Mappin & Webb / Goldsmiths group)**. **Real-time Telegram alerts** when a listing is mispriced cross-platform.
+> Cross-platform price arbitrage tool for **professional watch dealers** trading **Patek Philippe**, **Rolex**, and **Audemars Piguet (AP)** across **13 verified marketplaces**: **Chrono24**, **WatchBox / The 1916 Company** (2024 merger of WatchBox + **Govberg Jewelers** + **Hyde Park Jewelers**), **Bob's Watches**, **Watchfinder UK**, **European Watch Co (Boston)**, **Watches of Switzerland** (Mayors / Mappin & Webb / Goldsmiths group), **The Watch Club** (London + HK office), **H. Spliedt** (Munich/Hamburg/Sylt), **A Collected Man** (London), **Analog:Shift** (NYC vintage), **Bachmann & Scher** (Munich), **Yahoo Auctions Japan**, plus the dormant Hodinkee Shop slot. **Real-time Telegram alerts** when a listing is mispriced cross-platform, with **cross-country spread framing** (JP↔US, EU↔US) for global flippers.
 
 **Free to install. $0.05 per reference per day to monitor. $0.50 only when a real cross-platform spread fires and a Telegram alert is sent. No monthly minimum.**
 
@@ -10,26 +10,33 @@
 
 ## What does Watch Arbitrage Tracker do?
 
-This Actor monitors a list of watch references you care about (e.g. `5711/1A`, `116500LN`, `15500ST`) across **6 major dealer marketplaces simultaneously**, computes the **cross-platform median price**, and fires a **Telegram alert** the moment any listing drops more than `X%` (default 5%) below the cross-platform median.
+This Actor monitors a list of watch references you care about (e.g. `5711/1A`, `116500LN`, `15500ST`) across **13 dealer marketplaces simultaneously**, computes the **cross-platform median price**, and fires a **Telegram alert** the moment any listing drops more than `X%` (default 5%) below the cross-platform median — or surfaces a **cross-country spread** ("JP $148.2k ↔ US $192.5k") if you switch `compare_mode` to `cross_country_pair`.
 
-It runs on **Apify proxy + Camoufox** (a stealthy Firefox fork) so Cloudflare-protected sites like Chrono24 and Bobs Watches are scraped reliably. Schedule it once an hour and you have a real-time arbitrage radar — packaged as a transparent **Pay-Per-Event** Actor.
+It runs on **Apify proxy + Camoufox** (a stealthy Firefox fork) so Cloudflare-protected sites like Chrono24 and Bob's Watches are scraped reliably. Schedule it once an hour and you have a real-time arbitrage radar — packaged as a transparent **Pay-Per-Event** Actor.
 
-### Platform coverage (verified 2026-05-06, build 0.1.19)
+### Platform coverage (verified 2026-05-18, build 0.1.27)
 
-| Source | Status | Notes |
-|---|---|---|
-| **Chrono24** | ✅ Confirmed delivering listings | Largest global marketplace; widest variance — most arbitrage signals come from here |
-| **WatchBox / The 1916 Company** | ✅ Confirmed delivering listings | Premium US dealer (ex-Govberg + ex-Hyde Park merger 2024). Domain: `the1916company.com` (legacy `watchbox.com` redirects) |
-| **Bobs Watches** | ✅ Confirmed delivering listings | Rolex specialist, Newport Beach CA. Cloudflare-protected — Camoufox handles |
-| **Watchfinder UK** | ✅ Confirmed delivering listings | UK leader (Richemont Group). Cross-platform median signal validated |
-| European Watch Co (Boston) | ⚠️ Discovery in progress (v0.2) | 69+ Patek inventory verified but ref-grid filter calibration ongoing |
-| Watches of Switzerland | ⚠️ Discovery in progress (v0.2) | Patek pricing hidden ("price on request"); Rolex/AP works when in stock |
+| Source | Country | Status | Notes |
+|---|---|---|---|
+| **Chrono24** | EU | ✅ Live | Largest global marketplace; widest variance — most arbitrage signals come from here |
+| **WatchBox / The 1916 Company** | US | ✅ Live | Premium US dealer (ex-Govberg + ex-Hyde Park merger 2024). Domain: `the1916company.com` |
+| **Bob's Watches** | US | ✅ Live | Rolex specialist, Newport Beach CA. Cloudflare-protected — Camoufox handles |
+| **Watchfinder UK** | UK | ✅ Live | UK leader (Richemont Group) |
+| **European Watch Co** | US | ✅ Live | Boston pre-owned, strong Patek inventory |
+| **Watches of Switzerland** | UK | ✅ Live | Patek often "price on request"; Rolex/AP works when in stock |
+| **The Watch Club** | UK | ✅ Live | London HQ + HK office — UK pre-owned with HK shipping |
+| **H. Spliedt** | DE | ✅ Live | Munich/Hamburg/Sylt premium pre-owned, EUR pricing |
+| **A Collected Man** | UK | ✅ Live | London premium pre-owned + archive |
+| **Analog:Shift** | US | ✅ Live | NYC vintage + neo-vintage Patek specialist |
+| **Bachmann & Scher** | DE | ✅ Live | Munich pre-owned, EUR pricing |
+| **Yahoo Auctions Japan** | JP | ⚠️ Geo-blocked from EEA/UK — set `proxyConfiguration.apifyProxyCountry: 'JP'` to enable |
+| Hodinkee Shop | US | ⚠️ Dormant (post-merger announcement, near-zero inventory) |
 
-**4 platforms confirmed delivering cross-platform median signals** as of build 0.1.19. The 2 remaining sources are wired and run on every scheduled batch — when they return inventory matching your refs, listings flow into the dataset automatically.
+**11 of 13 sources confirmed actively delivering median signals.** Yahoo JP needs JP residential proxy (one-line config). Hodinkee kept in enum for back-compat when stock returns.
 
 ## Why use Watch Arbitrage Tracker?
 
-- **Stop tab-switching**: 6 sources (US + UK + EU coverage) monitored on every run, no manual refresh.
+- **Stop tab-switching**: 13 sources (US + UK + DE + JP + EU coverage) monitored on every run, no manual refresh.
 - **Find spreads other dealers miss**: a Daytona listed cheap on WatchBox while three other dealers list it $5K higher on Chrono24 = instant flip. We surface it before it sells.
 - **TRUE cross-platform median**: median is computed across all sources that returned listings for your sub-ref — not single-platform anchoring like Watchcharts or Bezel Club.
 - **EU↔US arbitrage built-in**: simplified import/VAT estimate (+20%) on EU listings so US dealers know the true landed cost.
@@ -232,7 +239,7 @@ Four chargeable events:
 | Event | When |
 |---|---|
 | `actor-start` | Once per run |
-| `reference-monitored` | Per reference scanned across all 6 platforms |
+| `reference-monitored` | Per reference scanned across all 13 platforms |
 | `apify-default-dataset-item` | Per listing scraped |
 | `spread-alert-triggered` | **Primary event** — only when a real arbitrage opportunity is dispatched (Telegram or email) |
 
@@ -318,7 +325,7 @@ If you're new to the secondary luxury watch market, here's the dealer landscape 
 - **Watches of Switzerland Group (WoS)** — UK + US retail chain group, includes **Mayors** (US), **Mappin & Webb** (UK), **Goldsmiths** (UK), and the WoS-branded boutiques. Patek pricing displayed as "price on request" and is therefore skipped; Rolex/AP work when in stock.
 - **Hodinkee Shop** — formerly an independent editorial+commerce site (NYC). Acquired by Watches of Switzerland Group in 2024; commerce side wound down through 2026. **Removed from default platforms** list 2026-05-04 but kept in the enum so any pre-existing scheduled runs don't break.
 
-Why those 6? They're the largest English-language sources for Patek/Rolex/AP secondary listings — together they represent the bulk of pricing visibility for English-speaking professional dealers (US/UK/CA/AU). German-language Chrono24 covers EU listing flow. Asian-Pacific dealer flow is on Chrono24 + private Telegram groups not yet wired in.
+Why these 13? They span the global pre-owned dealer flow that Chrono24-only Chrome-extension tools miss. **6 are loud-five US/UK majors** (Chrono24, WatchBox, Bob's, Watchfinder, European Watch, Watches of Switzerland) and **7 are blind-spot specialists** the typical $20/mo Chrome extension never scrapes — UK pre-owned (Watch Club, A Collected Man), DE pre-owned (Spliedt, Bachmann & Scher), US vintage (Analog:Shift), JP auctions (Yahoo Japan with JP-proxied route). That's where the wider cross-country spreads hide.
 
 ## Use as MCP server (Claude Desktop / Cursor / ChatGPT)
 
@@ -390,6 +397,18 @@ MCP queries use the same Pay-Per-Event meter as the batch crawler:
 - **Issues / feature requests**: open a [GitHub Issue](https://github.com/DataKazKN/watch-arbitrage-mcp/issues)
 - **Source code**: [github.com/DataKazKN/watch-arbitrage-mcp](https://github.com/DataKazKN/watch-arbitrage-mcp) (MIT-licensed; PRs welcome)
 - **Custom dealer integrations** (private feeds, SMS alerts, additional brands): contact via Apify message on the Actor's Store page
+
+## More KazKN Actors
+
+Watch Arbitrage Tracker is part of the [KazKN portfolio](https://apify.com/kazkn) — Apify Actors built by professional dealers, for professional dealers. If cross-marketplace price intelligence is the play, you'll probably also want:
+
+- **[Vinted Smart Scraper](https://apify.com/kazkn/vinted-smart-scraper?fpr=8fp2od)** — cross-country price comparison across 19 European Vinted marketplaces. 105K+ runs, 369+ users, ⭐5 average across 3 reviews. Same arbitrage philosophy: surface the spread other tools miss.
+- **[Vinted Turbo Scraper](https://apify.com/kazkn/vinted-turbo-scraper?fpr=8fp2od)** — high-throughput Vinted fetcher for volume operators (resellers, marketplace aggregators).
+- **[Vinted MCP Server](https://apify.com/kazkn/vinted-mcp-server?fpr=8fp2od)** — Vinted Smart Scraper exposed as a Model Context Protocol server. Talk to your Vinted inventory in Claude Desktop / Cursor / ChatGPT.
+- **[Commercial Real Estate Brokerage Intel](https://apify.com/kazkn/commercial-real-estate-brokerage-intel?fpr=8fp2od)** — LoopNet + Crexi listing tracker. Same cross-source median pattern, applied to CRE.
+- **[GPT Crawler MCP](https://apify.com/kazkn/gpt-crawler-mcp?fpr=8fp2od)** — turn any website into a knowledge file for ChatGPT, Claude, or RAG pipelines.
+
+Live dashboard with portfolio-wide stats: [kazkn-dashboard.fly.dev](https://kazkn-dashboard.fly.dev).
 
 ---
 
