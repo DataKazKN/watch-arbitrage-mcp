@@ -13,3 +13,4 @@
 {"date":"2026-05-21","day":3,"category":"A_xpost","action":"hashnode_xpost","outcome":"blocked","notes":"gql.hashnode.com returns Cloudflare 522. Known issue per team notes 2026-05-13. Retry later or use Playwright browser-harness."}
 {"date":"2026-05-21","day":3,"category":"G","action":"github_pr_punkpeye_awesome_mcp_servers","outcome":"success","artifact_url":"https://github.com/punkpeye/awesome-mcp-servers/pull/6685","metrics":{"target_repo_stars":87237}}
 {"date":"2026-05-21","day":3,"category":"D","action":"affiliate_link_audit_fix","outcome":"success","notes":"3 dev.to articles updated via API PUT with ?fpr=8fp2od on every apify.com/kazkn/* link"}
+{"date":"2026-05-21","day":7,"category":"C","action":"linkedin_post_article_9","outcome":"success","artifact_url":"https://www.linkedin.com/feed/ (Yorick Krahenbuhl, technical writeup #9 with dev.to preview)"}
