@@ -39,6 +39,7 @@ COPY --chown=myuser:myuser package*.json ./
 # tree for debugging
 RUN npm --quiet set progress=false \
     && npm install --omit=dev \
+    && PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=0 npx camoufox-js fetch \
     && echo "Installed NPM packages:" \
     && (npm list --omit=dev --all || true) \
     && echo "Node.js version:" \

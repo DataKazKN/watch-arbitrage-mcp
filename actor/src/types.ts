@@ -103,10 +103,11 @@ export interface ActorInput {
      *  Accepts either "ref:price" strings (current UI) or {reference, max_price_usd}
      *  objects (legacy JSON-editor shape). */
     price_ceilings?: PriceCeilingInput[];
-    alert_channel?: 'telegram' | 'dataset_only';
+    alert_channel?: 'telegram' | 'email' | 'both' | 'dataset_only';
     max_listings_per_ref_per_platform: number;
     alert_telegram_bot_token?: string;
     alert_telegram_chat_id?: string;
+    alert_email?: string;
     filter_conditions?: WatchCondition[];
     filter_box_papers?: BoxPapersStatus[];
     strict_condition_matching?: boolean;

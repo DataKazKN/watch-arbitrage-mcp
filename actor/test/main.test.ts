@@ -74,6 +74,36 @@ describe('Platform contract', () => {
         expect(enumTitles.length).toBe(13);
         expect(new Set(enumValues)).toEqual(new Set(ALL_PLATFORMS));
     });
+
+    it('keeps the default listing cap small enough for first-run economics', () => {
+        const schemaPath = resolve(ACTOR_ROOT, '.actor', 'input_schema.json');
+        const schema = JSON.parse(readFileSync(schemaPath, 'utf-8'));
+
+        expect(schema.properties.max_listings_per_ref_per_platform.default).toBe(10);
+    });
+
+    it('exposes Telegram, email, both, and dataset-only alert channels', () => {
+        const schemaPath = resolve(ACTOR_ROOT, '.actor', 'input_schema.json');
+        const schema = JSON.parse(readFileSync(schemaPath, 'utf-8'));
+
+        expect(schema.properties.alert_channel.default).toBe('telegram');
+        expect(schema.properties.alert_channel.enum).toEqual(['telegram', 'email', 'both', 'dataset_only']);
+        expect(schema.properties.alert_channel.enumTitles).toHaveLength(4);
+    });
+
+    it('exposes an email destination field in alert settings', () => {
+        const schemaPath = resolve(ACTOR_ROOT, '.actor', 'input_schema.json');
+        const schema = JSON.parse(readFileSync(schemaPath, 'utf-8'));
+        const emailField = schema.properties.alert_email;
+
+        expect(emailField).toMatchObject({
+            title: 'Alert email address',
+            type: 'string',
+            editor: 'textfield',
+            nullable: true,
+        });
+        expect(emailField.sectionCaption).toBe('🔔 Alert settings');
+    });
 });
 
 describe('URL builders', () => {

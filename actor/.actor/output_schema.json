@@ -1,7 +1,7 @@
 {
     "actorOutputSchemaVersion": 1,
     "title": "Watch Arbitrage Tracker — Output",
-    "description": "Cross-platform arbitrage opportunities + market snapshot + raw listings collected across 6 marketplaces (Chrono24, WatchBox, Bobs, Watchfinder UK, European Watch, Watches of Switzerland).",
+    "description": "Cross-platform arbitrage opportunities + market snapshot + raw listings collected across 13 marketplaces (Chrono24, WatchBox/The 1916 Company, Bobs, Watchfinder UK, European Watch, Watches of Switzerland, Watch Club, H. Spliedt, A Collected Man, Analog:Shift, Bachmann & Scher, Yahoo Auctions Japan, plus Hodinkee slot).",
     "properties": {
         "arbitrageOpportunities": {
             "type": "string",
@@ -15,10 +15,22 @@
             "description": "Per-reference statistics: median, min, max, listings count, platforms covered. Use this to understand cross-platform pricing baseline before drilling into individual listings.",
             "template": "{{links.apiDefaultKeyValueStoreUrl}}/records/MARKET_SNAPSHOT"
         },
+        "crossCountrySpreads": {
+            "type": "string",
+            "title": "🌍 Cross-country spreads",
+            "description": "Country-pair spread candidates such as JP ↔ US or EU ↔ US. Useful for dealers sourcing globally and comparing landed-cost routes.",
+            "template": "{{links.apiDefaultKeyValueStoreUrl}}/records/CROSS_COUNTRY_SPREADS"
+        },
+        "runEconomics": {
+            "type": "string",
+            "title": "💰 Run economics",
+            "description": "Estimated gross revenue, net after Apify margin, usage cost, and guard decision for the actual run shape. Use this to keep scheduled monitors profitable.",
+            "template": "{{links.apiDefaultKeyValueStoreUrl}}/records/RUN_ECONOMICS"
+        },
         "datasetItems": {
             "type": "string",
             "title": "💎 All listings (full dataset)",
-            "description": "Every individual listing collected across the 6 marketplaces. Browse, filter, sort by price, condition, year, box and papers. Export as JSON, CSV, Excel, or HTML.",
+            "description": "Every individual listing collected across the selected marketplaces. Browse, filter, sort by price, condition, year, box and papers. Export as JSON, CSV, Excel, or HTML.",
             "template": "{{links.apiDefaultDatasetUrl}}/items"
         }
     }

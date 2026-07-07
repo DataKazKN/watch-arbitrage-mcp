@@ -10,11 +10,7 @@
             "type": "array",
             "description": "Precise reference numbers give the cleanest arbitrage signals. Examples: <code>5711/1A-010</code>, <code>116500LN</code>, <code>124060</code>, <code>15500ST.OO.1220ST.04</code>.<br><br>Brand is auto-detected — mix Patek / Rolex / AP freely. Model names like <code>Nautilus</code> or <code>Daytona</code> work too but conflate sub-models with different prices.<br><br><b>Tip:</b> start with 3-5 refs you actually trade, add more later.",
             "editor": "stringList",
-            "prefill": [
-                "5711/1A-010",
-                "116500LN",
-                "124060"
-            ],
+            "prefill": ["5711/1A-010", "116500LN", "124060"],
             "minItems": 1,
             "uniqueItems": true,
             "sectionCaption": "🎯 What to track",
@@ -37,15 +33,14 @@
         "alert_channel": {
             "title": "Where to receive alerts",
             "type": "string",
-            "description": "Telegram is fastest for time-sensitive flips. Pick <b>Dataset only</b> if you'd rather poll Apify Console yourself.",
+            "description": "Telegram is fastest for time-sensitive flips. Email sends one digest per run. Pick <b>Both</b> for redundancy, or <b>Dataset only</b> if you'd rather poll Apify Console yourself.",
             "editor": "select",
             "default": "telegram",
-            "enum": [
-                "telegram",
-                "dataset_only"
-            ],
+            "enum": ["telegram", "email", "both", "dataset_only"],
             "enumTitles": [
                 "📱 Telegram (fastest)",
+                "✉️ Email digest",
+                "📱 + ✉️ Telegram + email",
                 "💾 Dataset only — no push"
             ]
         },
@@ -56,16 +51,8 @@
             "description": "How the actor frames the arbitrage opportunity in alerts.<br><br><b>Global</b> — one cross-platform median, alert below by your threshold. <b>Country pair</b> — surface country-vs-country gaps (\"JP $148k ↔ US $192k\"); best for dealers who already source globally. <b>Per country</b> — median computed per country (rare).",
             "editor": "select",
             "default": "cross_platform_global",
-            "enum": [
-                "cross_platform_global",
-                "cross_country_pair",
-                "per_country"
-            ],
-            "enumTitles": [
-                "🌐 Cross-platform global (default)",
-                "🇯🇵↔🇺🇸 Cross-country pair",
-                "🏠 Per country"
-            ]
+            "enum": ["cross_platform_global", "cross_country_pair", "per_country"],
+            "enumTitles": ["🌐 Cross-platform global (default)", "🇯🇵↔🇺🇸 Cross-country pair", "🏠 Per country"]
         },
 
         "alert_telegram_bot_token": {
@@ -87,6 +74,18 @@
             "example": "123456789"
         },
 
+        "alert_email": {
+            "title": "Alert email address",
+            "type": "string",
+            "description": "Email address that receives one digest when arbitrage opportunities are detected. Requires <b>Email digest</b> or <b>Telegram + email</b> above.",
+            "editor": "textfield",
+            "nullable": true,
+            "example": "dealer@example.com",
+            "pattern": "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$",
+            "sectionCaption": "🔔 Alert settings",
+            "sectionDescription": "Email fallback for dealers who prefer a run-level digest."
+        },
+
         "filter_conditions": {
             "title": "Conditions to include",
             "type": "array",
@@ -94,16 +93,7 @@
             "editor": "select",
             "items": {
                 "type": "string",
-                "enum": [
-                    "new",
-                    "like-new",
-                    "very-good",
-                    "good",
-                    "fair",
-                    "vintage",
-                    "pre-owned",
-                    "unknown"
-                ],
+                "enum": ["new", "like-new", "very-good", "good", "fair", "vintage", "pre-owned", "unknown"],
                 "enumTitles": [
                     "🆕 New / Unworn",
                     "✨ Like new / Mint",
@@ -116,13 +106,7 @@
                 ]
             },
             "uniqueItems": true,
-            "default": [
-                "new",
-                "like-new",
-                "very-good",
-                "pre-owned",
-                "unknown"
-            ],
+            "default": ["new", "like-new", "very-good", "pre-owned", "unknown"],
             "sectionCaption": "🎚️ Filter listings",
             "sectionDescription": "Tighten which listings count toward the spread. Skip if you want maximum volume."
         },
@@ -134,14 +118,7 @@
             "editor": "select",
             "items": {
                 "type": "string",
-                "enum": [
-                    "full-set",
-                    "box-and-papers",
-                    "papers-only",
-                    "box-only",
-                    "watch-only",
-                    "unknown"
-                ],
+                "enum": ["full-set", "box-and-papers", "papers-only", "box-only", "watch-only", "unknown"],
                 "enumTitles": [
                     "🏆 Full set",
                     "📦📄 Box + papers",
@@ -152,12 +129,7 @@
                 ]
             },
             "uniqueItems": true,
-            "default": [
-                "full-set",
-                "box-and-papers",
-                "papers-only",
-                "unknown"
-            ]
+            "default": ["full-set", "box-and-papers", "papers-only", "unknown"]
         },
 
         "strict_condition_matching": {
@@ -196,7 +168,7 @@
                     "🇬🇧 Watchfinder UK",
                     "🇺🇸 European Watch Company",
                     "🇬🇧 Watches of Switzerland",
-                    " ",
+                    "🇺🇸 Hodinkee Shop — dormant slot",
                     "🇬🇧 The Watch Club — London / HK office",
                     "🇯🇵 Yahoo Auctions Japan (requires non-EEA proxy)",
                     "🇩🇪 H. Spliedt — Munich/Hamburg/Sylt",
@@ -206,14 +178,7 @@
                 ]
             },
             "uniqueItems": true,
-            "default": [
-                "chrono24",
-                "watchbox",
-                "bobs",
-                "watchfinder",
-                "europeanwatch",
-                "watchesofswitzerland"
-            ],
+            "default": ["chrono24", "watchbox", "bobs", "watchfinder", "europeanwatch", "watchesofswitzerland"],
             "sectionCaption": "⚙️ Advanced — Platforms & cost",
             "sectionDescription": "6 production sources enabled by default. 7 opt-in extras: Watch Club, Yahoo JP, H. Spliedt, A Collected Man, Analog:Shift, Bachmann & Scher (plus the dormant Hodinkee slot)."
         },
@@ -231,9 +196,9 @@
         "max_listings_per_ref_per_platform": {
             "title": "Max listings per ref per platform",
             "type": "integer",
-            "description": "Caps fetches per reference per marketplace. Default <b>25</b> handles ~60 refs × 6 platforms ≈ 9000 listings/run. Lower for cheaper runs.",
+            "description": "Caps listings per reference per marketplace. Default <b>10</b> keeps first runs cheaper; raise only after the economics preflight passes.",
             "editor": "number",
-            "default": 25,
+            "default": 10,
             "minimum": 1,
             "maximum": 200,
             "unit": "listings"

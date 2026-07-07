@@ -1,21 +1,21 @@
 {
-	"$schema": "https://apify.com/schemas/v1/actor.ide.json",
-	"actorSpecification": 1,
-	"name": "watch-arbitrage-mcp",
-	"title": "Watch Arbitrage Tracker — Rolex/Patek/AP Cross-Platform Alerts",
-	"description": "Cross-platform watch arbitrage for pro dealers. Tracks Rolex, Patek Philippe, Audemars Piguet across 6 marketplaces: Chrono24, The 1916 Company, Bob's Watches, Watchfinder, European Watch Company, Watches of Switzerland. Telegram alerts on >5% spreads vs trimmed cross-platform median. Pay-Per-Event.",
-	"version": "0.1",
-	"meta": {
-		"templateId": "ts-crawlee-playwright-camoufox",
-		"generatedBy": "Claude Code with Claude Opus 4.7"
-	},
-	"input": "./input_schema.json",
-	"output": "./output_schema.json",
-	"storages": {
-		"dataset": "./dataset_schema.json",
-		"keyValueStore": "./key_value_store_schema.json"
-	},
-	"webServerSchema": "./web_server_openapi.json",
-	"usesStandbyMode": true,
-	"dockerfile": "../Dockerfile"
+    "$schema": "https://apify.com/schemas/v1/actor.ide.json",
+    "actorSpecification": 1,
+    "name": "watch-arbitrage-mcp",
+    "title": "Watch Arbitrage Tracker — Rolex/Patek/AP × 13 Marketplaces",
+    "description": "Cross-platform Patek/Rolex/AP arbitrage. Tracks 13 marketplaces: Chrono24, WatchBox, Bob's, Watchfinder, European Watch, Watches of Switzerland, Watch Club, Spliedt, A Collected Man, Analog:Shift, Bachmann & Scher, Yahoo Japan + Hodinkee. Telegram alerts on cross-country spreads. Pay-Per-Event.",
+    "version": "0.1",
+    "meta": {
+        "templateId": "ts-crawlee-playwright-camoufox",
+        "generatedBy": "Claude Code with Claude Opus 4.7"
+    },
+    "input": "./input_schema.json",
+    "output": "./output_schema.json",
+    "storages": {
+        "dataset": "./dataset_schema.json",
+        "keyValueStore": "./key_value_store_schema.json"
+    },
+    "webServerSchema": "./web_server_openapi.json",
+    "usesStandbyMode": true,
+    "dockerfile": "../Dockerfile"
 }

@@ -18,10 +18,11 @@
  *   5. dispatch alerts (Telegram + email) with 24h dedup
  *   6. write summaries to KV: ARBITRAGE_OPPORTUNITIES + MARKET_SNAPSHOT
  */
+import { setTimeout as sleep } from 'node:timers/promises';
+
 import { PlaywrightCrawler, type PlaywrightCrawlingContext } from '@crawlee/playwright';
 import { Actor, log } from 'apify';
 import { launchOptions as camoufoxLaunchOptions } from 'camoufox-js';
-import { setTimeout as sleep } from 'node:timers/promises';
 import { firefox } from 'playwright';
 
 import {
@@ -33,6 +34,7 @@ import {
     filterByRefMatch,
 } from './aggregator.js';
 import { dispatchAlerts, dispatchCrossCountryAlerts } from './alerts.js';
+import { chargeReferenceMonitoring } from './billing.js';
 import { acollectedmanHandler } from './crawlers/acollectedman.js';
 import { analogshiftHandler } from './crawlers/analogshift.js';
 import { bachmannscherHandler } from './crawlers/bachmannscher.js';
@@ -46,6 +48,7 @@ import { watchclubHandler } from './crawlers/watchclub.js';
 import { watchesofswitzerlandHandler } from './crawlers/watchesofswitzerland.js';
 import { watchfinderHandler } from './crawlers/watchfinder.js';
 import { yahoojpHandler } from './crawlers/yahoojp.js';
+import { buildRunEconomicsReport, normalizeRevenuePlan, shouldStopForEconomics } from './economics.js';
 import type { ActorInput, Listing, Platform } from './types.js';
 import { buildSearchUrls } from './utils/url.js';
 
@@ -64,6 +67,12 @@ if (isStandby) {
     log.info('[main] Starting in batch crawl mode');
     await runBatch();
     await Actor.exit();
+}
+
+function parseOptionalUsd(value: string | undefined): number | undefined {
+    if (!value) return undefined;
+    const parsed = Number.parseFloat(value);
+    return Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined;
 }
 
 async function runBatch(): Promise<void> {
@@ -89,7 +98,7 @@ async function runBatch(): Promise<void> {
 
     // ---- Per-reference price ceilings (override median anchor for listed refs) ----
     const priceCeilings = input.price_ceilings ?? [];
-    const maxListingsPerRefPerPlatform = input.max_listings_per_ref_per_platform ?? 25;
+    const maxListingsPerRefPerPlatform = input.max_listings_per_ref_per_platform ?? 10;
 
     if (references.length === 0) {
         log.error('Input "references" is empty — nothing to do.');
@@ -103,6 +112,43 @@ async function runBatch(): Promise<void> {
         price_ceilings_count: priceCeilings.length,
     });
 
+    const alertChannel = String(input.alert_channel ?? 'telegram');
+    const expectsTelegramAlerts = alertChannel === 'telegram' || alertChannel === 'both';
+    const expectsEmailAlerts = alertChannel === 'email' || alertChannel === 'both';
+    const hasTelegramCredentials = Boolean(input.alert_telegram_bot_token && input.alert_telegram_chat_id);
+    const hasEmailDestination = Boolean(input.alert_email);
+    const hasAlertDestination =
+        (expectsTelegramAlerts && hasTelegramCredentials) || (expectsEmailAlerts && hasEmailDestination);
+    const expectedSpreadAlertsOverride = parseOptionalUsd(process.env.WATCHARB_EXPECTED_SPREAD_ALERTS);
+    const minNetCoverageRatio = parseOptionalUsd(process.env.WATCHARB_MIN_NET_COVERAGE_RATIO);
+    const economicsReport = buildRunEconomicsReport({
+        referencesCount: references.length,
+        platforms,
+        maxListingsPerRefPerPlatform,
+        alertChannel: hasAlertDestination ? 'telegram' : 'dataset_only',
+        hasTelegramCredentials: hasAlertDestination,
+        expectedPaidSpreadAlerts: expectedSpreadAlertsOverride,
+        usesResidentialProxy: input.proxyConfiguration?.apifyProxyGroups?.includes('RESIDENTIAL') ?? false,
+        revenuePlan: normalizeRevenuePlan(process.env.WATCHARB_REVENUE_PLAN),
+        maxTotalChargeUsd: parseOptionalUsd(process.env.ACTOR_MAX_TOTAL_CHARGE_USD),
+        minNetCoverageRatio,
+    });
+    const economicsDecision = shouldStopForEconomics(economicsReport);
+    log.info('Run economics preflight', { ...economicsReport, decision: economicsDecision });
+    if (economicsDecision.stop && process.env.WATCHARB_ALLOW_UNPROFITABLE_RUN !== '1') {
+        await Actor.setValue('ECONOMICS_GUARD', { report: economicsReport, decision: economicsDecision });
+        log.warning('Stopping before crawl because projected run economics are below guard threshold.', {
+            reason: economicsDecision.reason,
+        });
+        await Actor.exit({ exitCode: 0 });
+        return;
+    }
+    if (economicsDecision.stop) {
+        log.warning('WATCHARB_ALLOW_UNPROFITABLE_RUN=1 set. Continuing despite economics guard.', {
+            reason: economicsDecision.reason,
+        });
+    }
+
     // Charge actor-start + check spending limit (respect ACTOR_MAX_TOTAL_CHARGE_USD).
     const startCharge = await Actor.charge({ eventName: 'actor-start' }).catch(() => null);
     if (startCharge?.eventChargeLimitReached) {
@@ -110,27 +156,40 @@ async function runBatch(): Promise<void> {
         await Actor.exit({ exitCode: 0 });
     }
 
-    let monitoringLimitReached = false;
-    for (const _ref of references) {
-        if (monitoringLimitReached) break;
-        const r = await Actor.charge({ eventName: 'reference-monitored' }).catch(() => null);
-        if (r?.eventChargeLimitReached) {
-            log.warning(
-                'User spending limit reached on reference-monitored. Will skip remaining refs and continue with what was charged.',
-            );
-            monitoringLimitReached = true;
-        }
+    const monitoringBilling = await chargeReferenceMonitoring(references, {
+        charge: async (payload) => Actor.charge(payload),
+        warn: (message) => log.warning(message),
+    });
+    const monitoredReferences = monitoringBilling.referencesToMonitor;
+    if (monitoringBilling.limitReached) {
+        log.warning('Reference monitoring billing limit reached. Continuing only with references that were charged.', {
+            requested_references_count: references.length,
+            charged_references_count: monitoringBilling.chargedReferencesCount,
+        });
+    }
+    if (monitoredReferences.length === 0) {
+        await Actor.setValue('REFERENCE_MONITORING_GUARD', {
+            requested_references: references,
+            charged_references_count: 0,
+            reason: 'No references cleared the reference-monitored charge; crawl skipped to avoid unpaid compute.',
+        });
+        log.warning('No references cleared reference-monitored billing. Exiting before crawl.');
+        await Actor.exit({ exitCode: 0 });
+        return;
     }
 
     // --- Build cross-platform request list ---
     type PlatformRequest = { url: string; userData: { ref: string; platform: Platform } };
     const allRequests: PlatformRequest[] = [];
     for (const platform of platforms) {
-        for (const r of buildSearchUrls(platform, references)) {
+        for (const r of buildSearchUrls(platform, monitoredReferences)) {
             allRequests.push({ url: r.url, userData: { ref: r.userData.ref, platform } });
         }
     }
-    log.info(`Queued ${allRequests.length} search requests`);
+    log.info(`Queued ${allRequests.length} search requests`, {
+        requested_references_count: references.length,
+        monitored_references_count: monitoredReferences.length,
+    });
 
     // --- One crawler with router-style dispatch by platform ---
     const collected: Listing[] = [];
@@ -207,6 +266,9 @@ async function runBatch(): Promise<void> {
                     case 'bachmannscher':
                         listings = await bachmannscherHandler(ctx, maxListingsPerRefPerPlatform);
                         break;
+                    default:
+                        log.warning(`Unsupported platform`, { platform });
+                        return;
                 }
             } catch (err) {
                 log.error(`${platform} handler crashed`, { err: String(err), url: ctx.request.url });
@@ -296,17 +358,47 @@ async function runBatch(): Promise<void> {
     // default and matches v0.1 behavior; `cross_country_pair` uses the new
     // country-aware format. `per_country` is reserved for v0.3.
     const alertConfig = {
-        telegramBotToken: input.alert_telegram_bot_token,
-        telegramChatId: input.alert_telegram_chat_id,
-        email: undefined,
+        telegramBotToken: expectsTelegramAlerts ? input.alert_telegram_bot_token : undefined,
+        telegramChatId: expectsTelegramAlerts ? input.alert_telegram_chat_id : undefined,
+        email: expectsEmailAlerts ? input.alert_email : undefined,
     };
 
     if (compareMode === 'cross_country_pair') {
         const alertResult = await dispatchCrossCountryAlerts(crossCountryAlerts, alertConfig);
         log.info(`Cross-country alerts dispatched`, alertResult);
+        const actualEconomicsReport = buildRunEconomicsReport({
+            referencesCount: monitoredReferences.length,
+            platforms,
+            maxListingsPerRefPerPlatform,
+            alertChannel: hasAlertDestination ? 'telegram' : 'dataset_only',
+            hasTelegramCredentials: hasAlertDestination,
+            expectedDatasetItems: collected.length,
+            expectedPaidSpreadAlerts: alertResult.telegram_sent,
+            usesResidentialProxy: input.proxyConfiguration?.apifyProxyGroups?.includes('RESIDENTIAL') ?? false,
+            revenuePlan: normalizeRevenuePlan(process.env.WATCHARB_REVENUE_PLAN),
+            maxTotalChargeUsd: parseOptionalUsd(process.env.ACTOR_MAX_TOTAL_CHARGE_USD),
+            minNetCoverageRatio,
+        });
+        log.info('Run economics actual estimate', actualEconomicsReport);
+        await Actor.setValue('RUN_ECONOMICS', actualEconomicsReport);
     } else {
         // Default: cross_platform_global (also covers per_country until v0.3 ships).
         const alertResult = await dispatchAlerts(opportunities, alertConfig);
         log.info(`Alerts dispatched`, alertResult);
+        const actualEconomicsReport = buildRunEconomicsReport({
+            referencesCount: monitoredReferences.length,
+            platforms,
+            maxListingsPerRefPerPlatform,
+            alertChannel: hasAlertDestination ? 'telegram' : 'dataset_only',
+            hasTelegramCredentials: hasAlertDestination,
+            expectedDatasetItems: collected.length,
+            expectedPaidSpreadAlerts: alertResult.telegram_sent,
+            usesResidentialProxy: input.proxyConfiguration?.apifyProxyGroups?.includes('RESIDENTIAL') ?? false,
+            revenuePlan: normalizeRevenuePlan(process.env.WATCHARB_REVENUE_PLAN),
+            maxTotalChargeUsd: parseOptionalUsd(process.env.ACTOR_MAX_TOTAL_CHARGE_USD),
+            minNetCoverageRatio,
+        });
+        log.info('Run economics actual estimate', actualEconomicsReport);
+        await Actor.setValue('RUN_ECONOMICS', actualEconomicsReport);
     }
 }

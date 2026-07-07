@@ -4,7 +4,7 @@
 
 > Cross-platform price arbitrage tool for **professional watch dealers** trading **Patek Philippe**, **Rolex**, and **Audemars Piguet (AP)** across **13 verified marketplaces**: **Chrono24**, **WatchBox / The 1916 Company** (2024 merger of WatchBox + **Govberg Jewelers** + **Hyde Park Jewelers**), **Bob's Watches**, **Watchfinder UK**, **European Watch Co (Boston)**, **Watches of Switzerland** (Mayors / Mappin & Webb / Goldsmiths group), **The Watch Club** (London + HK office), **H. Spliedt** (Munich/Hamburg/Sylt), **A Collected Man** (London), **Analog:Shift** (NYC vintage), **Bachmann & Scher** (Munich), **Yahoo Auctions Japan**, plus the dormant Hodinkee Shop slot. **Real-time Telegram alerts** when a listing is mispriced cross-platform, with **cross-country spread framing** (JP↔US, EU↔US) for global flippers.
 
-**Free to install. $0.05 per reference per day to monitor. $0.50 only when a real cross-platform spread fires and a Telegram alert is sent. No monthly minimum.**
+**Free to install. Current live pricing: $0.05 per reference on Free/Bronze, discounted reference pricing on Silver/Gold+, $1.50-$2.00 when a real cross-platform spread alert is sent, and $0.001 per listing written to the dataset. No monthly minimum.**
 
 ▶ **[Try Watch Arbitrage free](https://apify.com/kazkn/watch-arbitrage-mcp?fpr=8fp2od)** — pro dealers catch their first cross-platform mispriced listing in under 10 min. Pay only when a real spread fires.
 
@@ -16,21 +16,21 @@ It runs on **Apify proxy + Camoufox** (a stealthy Firefox fork) so Cloudflare-pr
 
 ### Platform coverage (verified 2026-05-18, build 0.1.27)
 
-| Source | Country | Status | Notes |
-|---|---|---|---|
-| **Chrono24** | EU | ✅ Live | Largest global marketplace; widest variance — most arbitrage signals come from here |
-| **WatchBox / The 1916 Company** | US | ✅ Live | Premium US dealer (ex-Govberg + ex-Hyde Park merger 2024). Domain: `the1916company.com` |
-| **Bob's Watches** | US | ✅ Live | Rolex specialist, Newport Beach CA. Cloudflare-protected — Camoufox handles |
-| **Watchfinder UK** | UK | ✅ Live | UK leader (Richemont Group) |
-| **European Watch Co** | US | ✅ Live | Boston pre-owned, strong Patek inventory |
-| **Watches of Switzerland** | UK | ✅ Live | Patek often "price on request"; Rolex/AP works when in stock |
-| **The Watch Club** | UK | ✅ Live | London HQ + HK office — UK pre-owned with HK shipping |
-| **H. Spliedt** | DE | ✅ Live | Munich/Hamburg/Sylt premium pre-owned, EUR pricing |
-| **A Collected Man** | UK | ✅ Live | London premium pre-owned + archive |
-| **Analog:Shift** | US | ✅ Live | NYC vintage + neo-vintage Patek specialist |
-| **Bachmann & Scher** | DE | ✅ Live | Munich pre-owned, EUR pricing |
-| **Yahoo Auctions Japan** | JP | ⚠️ Geo-blocked from EEA/UK — set `proxyConfiguration.apifyProxyCountry: 'JP'` to enable |
-| Hodinkee Shop | US | ⚠️ Dormant (post-merger announcement, near-zero inventory) |
+| Source                          | Country | Status                                                                                  | Notes                                                                                   |
+| ------------------------------- | ------- | --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| **Chrono24**                    | EU      | ✅ Live                                                                                 | Largest global marketplace; widest variance — most arbitrage signals come from here     |
+| **WatchBox / The 1916 Company** | US      | ✅ Live                                                                                 | Premium US dealer (ex-Govberg + ex-Hyde Park merger 2024). Domain: `the1916company.com` |
+| **Bob's Watches**               | US      | ✅ Live                                                                                 | Rolex specialist, Newport Beach CA. Cloudflare-protected — Camoufox handles             |
+| **Watchfinder UK**              | UK      | ✅ Live                                                                                 | UK leader (Richemont Group)                                                             |
+| **European Watch Co**           | US      | ✅ Live                                                                                 | Boston pre-owned, strong Patek inventory                                                |
+| **Watches of Switzerland**      | UK      | ✅ Live                                                                                 | Patek often "price on request"; Rolex/AP works when in stock                            |
+| **The Watch Club**              | UK      | ✅ Live                                                                                 | London HQ + HK office — UK pre-owned with HK shipping                                   |
+| **H. Spliedt**                  | DE      | ✅ Live                                                                                 | Munich/Hamburg/Sylt premium pre-owned, EUR pricing                                      |
+| **A Collected Man**             | UK      | ✅ Live                                                                                 | London premium pre-owned + archive                                                      |
+| **Analog:Shift**                | US      | ✅ Live                                                                                 | NYC vintage + neo-vintage Patek specialist                                              |
+| **Bachmann & Scher**            | DE      | ✅ Live                                                                                 | Munich pre-owned, EUR pricing                                                           |
+| **Yahoo Auctions Japan**        | JP      | ⚠️ Geo-blocked from EEA/UK — set `proxyConfiguration.apifyProxyCountry: 'JP'` to enable |
+| Hodinkee Shop                   | US      | ⚠️ Dormant (post-merger announcement, near-zero inventory)                              |
 
 **11 of 13 sources confirmed actively delivering median signals.** Yahoo JP needs JP residential proxy (one-line config). Hodinkee kept in enum for back-compat when stock returns.
 
@@ -41,7 +41,7 @@ It runs on **Apify proxy + Camoufox** (a stealthy Firefox fork) so Cloudflare-pr
 - **TRUE cross-platform median**: median is computed across all sources that returned listings for your sub-ref — not single-platform anchoring like Watchcharts or Bezel Club.
 - **EU↔US arbitrage built-in**: simplified import/VAT estimate (+20%) on EU listings so US dealers know the true landed cost.
 - **Telegram-native**: dealers live on Telegram. Alerts land in your group chat with brand+sub-ref, asking price, median, spread % below median, and a one-tap link to the listing.
-- **Pay only when you win**: PPE pricing — you pay $0.05 per ref/day to monitor + $0.50 *only* when an actual spread is detected and a real Telegram alert is dispatched.
+- **Pay only when you win**: PPE pricing — monitoring and dataset rows stay low-cost, while the main value event is the paid spread alert ($1.50-$2.00 depending on Apify plan) when a real opportunity is dispatched.
 
 ## How to use Watch Arbitrage Tracker
 
@@ -57,7 +57,7 @@ Open Telegram, search for **@BotFather** (verified by Telegram with a blue check
 
 ![@BotFather verified bot profile in Telegram](https://raw.githubusercontent.com/DataKazKN/watch-arbitrage-mcp/main/actor/assets/screenshots/06-botfather-profile.png)
 
-Tap *Message* → type `/newbot` → choose any name (e.g. "Watch Arbitrage"):
+Tap _Message_ → type `/newbot` → choose any name (e.g. "Watch Arbitrage"):
 
 ![BotFather /newbot flow — name your new bot](https://raw.githubusercontent.com/DataKazKN/watch-arbitrage-mcp/main/actor/assets/screenshots/07-botfather-newbot.png)
 
@@ -87,30 +87,32 @@ The Actor runs in ~5 minutes. Telegram pings on real spreads with asking price +
 
 The Apify Console form is grouped in sections (Quick Start, Telegram setup, Filters, Advanced). Smart defaults work for most dealers.
 
-| Field | Type | Description |
-|---|---|---|
-| `references` | string[] | **Precise reference numbers recommended** (e.g. `5711/1A-010`, `116500LN`, `15500ST.OO.1220ST.04`). Model names like `Nautilus`, `Daytona`, `Royal Oak` are accepted but produce less precise spread alerts (sub-models conflated). |
-| `spread_sensitivity` | enum string | `"3"` to `"20"` — % below cross-platform median to trigger alert. Default `"5"` (recommended balance). |
-| `alert_channel` | enum | `telegram` / `dataset_only`. Default `telegram`. *(Email digest coming v0.2 — see "What's new" for details on why it's deferred.)* |
-| `alert_telegram_bot_token` | string (secret) | Bot token from `@BotFather`. Required for Telegram. |
-| `alert_telegram_chat_id` | string | Numeric chat ID via `@userinfobot`. |
-| `filter_conditions` | enum[] | Only include listings with these conditions: `new`, `like-new`, `very-good`, `good`, `fair`, `vintage`, `pre-owned`, `unknown`. |
-| `strict_condition_matching` | bool | When `true`: exclude listings where condition couldn't be reliably scraped. Pair with Bobs + Watchfinder + European Watch for clean filtering. |
-| `filter_box_papers` | enum[] | `full-set`, `box-and-papers`, `papers-only`, `box-only`, `watch-only`, `unknown`. |
-| `platforms` | enum[] | Default: all 6 active. Hodinkee deprecated (acquired by WoS Group, inventory winding down) but kept in enum for backward-compat. |
-| `max_listings_per_ref_per_platform` | int | Cap to control compute cost (default 25). |
+| Field                               | Type            | Description                                                                                                                                                                                                                         |
+| ----------------------------------- | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `references`                        | string[]        | **Precise reference numbers recommended** (e.g. `5711/1A-010`, `116500LN`, `15500ST.OO.1220ST.04`). Model names like `Nautilus`, `Daytona`, `Royal Oak` are accepted but produce less precise spread alerts (sub-models conflated). |
+| `spread_sensitivity`                | enum string     | `"3"` to `"20"` — % below cross-platform median to trigger alert. Default `"5"` (recommended balance).                                                                                                                              |
+| `alert_channel`                     | enum            | `telegram` / `email` / `both` / `dataset_only`. Default `telegram`. Email sends one run-level digest when spreads are detected.                                                                                                     |
+| `alert_telegram_bot_token`          | string (secret) | Bot token from `@BotFather`. Required for Telegram.                                                                                                                                                                                 |
+| `alert_telegram_chat_id`            | string          | Numeric chat ID via `@userinfobot`.                                                                                                                                                                                                 |
+| `alert_email`                       | string          | Email address that receives the digest. Required for `email` or `both`.                                                                                                                                                             |
+| `filter_conditions`                 | enum[]          | Only include listings with these conditions: `new`, `like-new`, `very-good`, `good`, `fair`, `vintage`, `pre-owned`, `unknown`.                                                                                                     |
+| `strict_condition_matching`         | bool            | When `true`: exclude listings where condition couldn't be reliably scraped. Pair with Bobs + Watchfinder + European Watch for clean filtering.                                                                                      |
+| `filter_box_papers`                 | enum[]          | `full-set`, `box-and-papers`, `papers-only`, `box-only`, `watch-only`, `unknown`.                                                                                                                                                   |
+| `platforms`                         | enum[]          | Default: 6 production sources. 7 extra specialist sources are opt-in, including Yahoo JP for JP-proxied runs. Hodinkee is dormant but kept in enum for backward-compat.                                                             |
+| `max_listings_per_ref_per_platform` | int             | Cap to control compute cost (default 10). Raise only after the economics preflight passes.                                                                                                                                          |
 
 Example input:
 
 ```json
 {
-  "references": ["5711/1A-010", "116500LN", "124060", "15500ST.OO.1220ST.04"],
-  "platforms": ["chrono24", "watchbox", "bobs", "watchfinder", "europeanwatch", "watchesofswitzerland"],
-  "spread_sensitivity": "5",
-  "alert_channel": "telegram",
-  "alert_telegram_chat_id": "123456789",
-  "filter_conditions": ["new", "like-new", "very-good", "pre-owned"],
-  "strict_condition_matching": false
+    "references": ["5711/1A-010", "116500LN", "124060", "15500ST.OO.1220ST.04"],
+    "platforms": ["chrono24", "watchbox", "bobs", "watchfinder", "europeanwatch", "watchesofswitzerland"],
+    "spread_sensitivity": "5",
+    "alert_channel": "both",
+    "alert_telegram_chat_id": "123456789",
+    "alert_email": "dealer@example.com",
+    "filter_conditions": ["new", "like-new", "very-good", "pre-owned"],
+    "strict_condition_matching": false
 }
 ```
 
@@ -119,7 +121,7 @@ Example input:
 Three artifacts per run:
 
 1. **Dataset** — every individual listing scraped (CSV / JSON / Excel export).
-2. **`MARKET_SNAPSHOT`** (KV store) — per-reference median, min, max, count across all 6 platforms.
+2. **`MARKET_SNAPSHOT`** (KV store) — per-reference median, min, max, count across selected platforms.
 3. **`ARBITRAGE_OPPORTUNITIES`** (KV store) — only the listings that crossed the spread threshold.
 
 ### Dataset table view (Apify Console "Output" tab)
@@ -150,21 +152,21 @@ Sample dataset item (Patek 5711/1A-010 listed on Chrono24):
 
 ```json
 {
-  "ref": "5711/1A-010",
-  "brand": "patek-philippe",
-  "platform": "chrono24",
-  "title": "Patek Philippe Nautilus 5711/1A-010 - Calibre 324 S C",
-  "price_usd": 110982,
-  "price_orig": 102450,
-  "currency": "EUR",
-  "listing_url": "https://www.chrono24.com/patekphilippe/nautilus--id45152307.htm",
-  "dealer": "European Watch Co.",
-  "condition": "Very good",
-  "condition_normalized": "very-good",
-  "box_papers": "full-set",
-  "year": 2018,
-  "location": "DE",
-  "scraped_at": "2026-05-05T15:55:00.000Z"
+    "ref": "5711/1A-010",
+    "brand": "patek-philippe",
+    "platform": "chrono24",
+    "title": "Patek Philippe Nautilus 5711/1A-010 - Calibre 324 S C",
+    "price_usd": 110982,
+    "price_orig": 102450,
+    "currency": "EUR",
+    "listing_url": "https://www.chrono24.com/patekphilippe/nautilus--id45152307.htm",
+    "dealer": "European Watch Co.",
+    "condition": "Very good",
+    "condition_normalized": "very-good",
+    "box_papers": "full-set",
+    "year": 2018,
+    "location": "DE",
+    "scraped_at": "2026-05-05T15:55:00.000Z"
 }
 ```
 
@@ -172,20 +174,20 @@ Sample arbitrage opportunity (real result from build 0.1.18 cloud run, 2026-05-0
 
 ```json
 {
-  "ref": "124060",
-  "brand": "rolex",
-  "median_usd": 13988,
-  "spread_usd": 3938,
-  "spread_pct": 28.2,
-  "listing": {
     "ref": "124060",
-    "platform": "watchbox",
-    "title": "Rolex Submariner No Date 124060",
-    "price_usd": 10050,
-    "dealer": "1916 Company (ex-WatchBox)",
-    "listing_url": "https://www.the1916company.com/.../124060-..."
-  },
-  "detected_at": "2026-05-06T00:46:42.000Z"
+    "brand": "rolex",
+    "median_usd": 13988,
+    "spread_usd": 3938,
+    "spread_pct": 28.2,
+    "listing": {
+        "ref": "124060",
+        "platform": "watchbox",
+        "title": "Rolex Submariner No Date 124060",
+        "price_usd": 10050,
+        "dealer": "1916 Company (ex-WatchBox)",
+        "listing_url": "https://www.the1916company.com/.../124060-..."
+    },
+    "detected_at": "2026-05-06T00:46:42.000Z"
 }
 ```
 
@@ -198,6 +200,7 @@ This is what actually arrived in our test Telegram chat from the build 0.1.19 ru
 ![Real Telegram alerts — 3 spreads detected on Rolex 126610LV](https://raw.githubusercontent.com/DataKazKN/watch-arbitrage-mcp/main/actor/assets/screenshots/08-telegram-alerts-real.png)
 
 Each alert includes:
+
 - **Brand + sub-reference** (`Rolex — 126610LV`)
 - **Asking price** + the platform name (`$11,900 on Chrono24` — clean platform labels, not raw enums)
 - **Cross-platform median** computed across every source that returned listings
@@ -206,62 +209,78 @@ Each alert includes:
 - **Asking price disclaimer** — listed price excl. shipping, taxes, customs (varies by buyer location)
 - **Direct link** to the listing on the source platform
 
-> The asking-price disclaimer is important: dealer-listed price ≠ delivered price. Add ~10-20% for shipping + import duty + sales tax depending on your buyer's geography. The alert reflects the *asking price the dealer typed on their listing page* — that's the price you negotiate from.
+> The asking-price disclaimer is important: dealer-listed price ≠ delivered price. Add ~10-20% for shipping + import duty + sales tax depending on your buyer's geography. The alert reflects the _asking price the dealer typed on their listing page_ — that's the price you negotiate from.
 
 Note: arbitrage stats are computed per **sub-reference** (e.g. `5711/1A-010` vs `7011/1G` are tracked as separate sub-models even when both come from a `Nautilus` search). This eliminates false positives where a ladies' Nautilus would flag as a "spread" against the men's median.
 
 ## Data table — fields per listing
 
-| Field | Description |
-|---|---|
-| `ref` | Reference number you queried |
-| `brand` | Auto-detected: `patek-philippe` / `rolex` / `audemars-piguet` |
-| `platform` | `chrono24` / `watchbox` / `bobs` / `watchfinder` / `europeanwatch` / `watchesofswitzerland` |
-| `title` | Listing title from the source page |
-| `price_usd` | Normalized to USD via static FX (EUR/GBP/CHF/etc.) |
-| `price_orig` | Raw price as listed |
-| `currency` | Original currency |
-| `condition` | Raw condition string from source page (e.g. `"Very good"`, `"Pre-owned"`) |
-| `condition_normalized` | Normalized to `new` / `like-new` / `very-good` / `good` / `fair` / `vintage` / `pre-owned` / `unknown` |
-| `box_papers` | Detected box & papers status: `full-set` / `box-and-papers` / `papers-only` / `box-only` / `watch-only` / `unknown` |
-| `dealer` | Dealer / seller name |
-| `year` | Manufacture year if available |
-| `location` | Country code if available |
-| `listing_url` | Direct link to the listing |
-| `scraped_at` | ISO timestamp |
+| Field                  | Description                                                                                                         |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `ref`                  | Reference number you queried                                                                                        |
+| `brand`                | Auto-detected: `patek-philippe` / `rolex` / `audemars-piguet`                                                       |
+| `platform`             | `chrono24` / `watchbox` / `bobs` / `watchfinder` / `europeanwatch` / `watchesofswitzerland`                         |
+| `title`                | Listing title from the source page                                                                                  |
+| `price_usd`            | Normalized to USD via static FX (EUR/GBP/CHF/etc.)                                                                  |
+| `price_orig`           | Raw price as listed                                                                                                 |
+| `currency`             | Original currency                                                                                                   |
+| `condition`            | Raw condition string from source page (e.g. `"Very good"`, `"Pre-owned"`)                                           |
+| `condition_normalized` | Normalized to `new` / `like-new` / `very-good` / `good` / `fair` / `vintage` / `pre-owned` / `unknown`              |
+| `box_papers`           | Detected box & papers status: `full-set` / `box-and-papers` / `papers-only` / `box-only` / `watch-only` / `unknown` |
+| `dealer`               | Dealer / seller name                                                                                                |
+| `year`                 | Manufacture year if available                                                                                       |
+| `location`             | Country code if available                                                                                           |
+| `listing_url`          | Direct link to the listing                                                                                          |
+| `scraped_at`           | ISO timestamp                                                                                                       |
 
 ## Pricing
 
 Pay-Per-Event — you only pay for what the Actor actually does. See current pricing on the **Apify Store page** (live rates and plan-based discounts shown there).
 
-Four chargeable events:
+Current live chargeable events:
 
-| Event | When |
-|---|---|
-| `actor-start` | Once per run |
-| `reference-monitored` | Per reference scanned across all 13 platforms |
-| `apify-default-dataset-item` | Per listing scraped |
-| `spread-alert-triggered` | **Primary event** — only when a real arbitrage opportunity is dispatched (Telegram or email) |
+| Event                        |                                        Live price | When                                                                                       |
+| ---------------------------- | ------------------------------------------------: | ------------------------------------------------------------------------------------------ |
+| `actor-start`                |                                          $0.00005 | Once per run                                                                               |
+| `reference-monitored`        | $0.05 Free/Bronze; $0.0045 Silver; $0.00375 Gold+ | Per reference monitored in the run                                                         |
+| `apify-default-dataset-item` |                                            $0.001 | Per listing written to the dataset                                                         |
+| `spread-alert-triggered`     |      $2.00 Free/Bronze; $1.80 Silver; $1.50 Gold+ | **Primary value event** — only when a real arbitrage opportunity is dispatched to Telegram |
 
-**Discounts apply to higher Apify plans** (Bronze / Silver / Gold) — visible on the Store page pricing tab.
+The Silver/Gold+ discount on `reference-monitored` is intentionally shown here because it materially changes run economics. For larger dataset-only runs, listing charges may not cover Camoufox/proxy compute after Apify's 20% platform margin.
 
-**Spending limit respected**: the Actor reads `ACTOR_MAX_TOTAL_CHARGE_USD` and stops gracefully when your run budget is reached, so a runaway alert spike never blows past the cap you set in the Apify Console.
+**Economics preflight**: before crawling, the Actor estimates references x marketplaces, expected dataset rows, proxy risk, live plan pricing, Apify margin, and `ACTOR_MAX_TOTAL_CHARGE_USD`. If the expected net revenue does not cover the likely platform cost, the run stops before scraping and writes an `ECONOMICS_GUARD` key-value record explaining why.
 
-For light usage, set `alert_channel: "dataset_only"` to skip all `spread-alert-triggered` charges and read the dataset directly. For full real-time coverage with Telegram alerts, schedule hourly with a representative ref portfolio.
+### Avoid surprise charges / Run budget
+
+- Start with 1-3 precise references, the default 6 production marketplaces, and `max_listings_per_ref_per_platform: 10`.
+- Use `alert_channel: "telegram"`, `"email"`, or `"both"` with valid alert credentials if you want the value event. `dataset_only` is useful for inspection, but larger dataset-only runs can be stopped by the economics guard.
+- Set a per-run spending limit in Apify Console. If `ACTOR_MAX_TOTAL_CHARGE_USD` is lower than the break-even gross required for the selected scope, the Actor stops before crawl.
+- Narrow `platforms` before raising listing caps. Chrono24, WatchBox/The 1916 Company, Bobs, Watchfinder, European Watch, and Watches of Switzerland are the default production set.
+- Avoid residential proxy groups unless you need them. The guard treats residential proxy runs as materially more expensive.
+
+Example gross before Apify margin:
+
+| Scope                                                                  |                                                    Expected gross |
+| ---------------------------------------------------------------------- | ----------------------------------------------------------------: |
+| 1 reference, default 6 marketplaces, ~30 dataset rows, no spread alert | about $0.034 Gold+; about $0.035 Silver; about $0.080 Free/Bronze |
+| 3 references, default 6 marketplaces, one paid spread alert            |    about $1.60 Gold+; about $1.90 Silver; about $2.24 Free/Bronze |
+| 6 references, default 6 marketplaces, dataset-only, ~170 rows          |    about $0.19 Gold+; about $0.20 Silver; about $0.47 Free/Bronze |
+
+That last shape is the one to avoid: after Apify's 20% margin, about $0.20 gross can become roughly $0.16 net before compute, which is not enough for a ~$0.16 platform-cost run.
 
 ## How spread detection actually works (read this once)
 
-A common question: *"Why do most of my alerts come from Chrono24, with only occasional ones from WatchBox / Bobs / Watchfinder?"*
+A common question: _"Why do most of my alerts come from Chrono24, with only occasional ones from WatchBox / Bobs / Watchfinder?"_
 
 That's the **mathematically expected** behavior — and it's actually the value of cross-platform median:
 
 1. **Cross-platform median = the consensus price.** The actor computes the median price for each sub-ref across every source that returned listings (e.g. Chrono24 + WatchBox + Bobs for `124060`).
 2. **Outlier listings below median = arbitrage opportunities.** A spread alert fires when ANY individual listing on ANY platform sits more than `X%` (default 5%) below that consensus.
 3. **Where do outliers come from?** Mostly from **Chrono24** because:
-   - Chrono24 has the **highest listing volume** per ref (typically 8-12 listings vs 1-2 on dealer sites)
-   - **More listings = more variance** → statistically more outliers below median
-   - Independent dealers on Chrono24 have **wider pricing dispersion** than US/UK retail dealers (who maintain stable floor prices to protect their own margin)
-4. **WatchBox + Bobs + Watchfinder mostly anchor the median.** Their inventory is small but their pricing is **stable and trustworthy** — they're the floor that defines what the watch is *really* worth. They occasionally trigger their own alerts when they get aggressive on a single piece (e.g. the 124060 example above: WatchBox at $10,050 vs the $13,988 cross-platform median).
+    - Chrono24 has the **highest listing volume** per ref (typically 8-12 listings vs 1-2 on dealer sites)
+    - **More listings = more variance** → statistically more outliers below median
+    - Independent dealers on Chrono24 have **wider pricing dispersion** than US/UK retail dealers (who maintain stable floor prices to protect their own margin)
+4. **WatchBox + Bobs + Watchfinder mostly anchor the median.** Their inventory is small but their pricing is **stable and trustworthy** — they're the floor that defines what the watch is _really_ worth. They occasionally trigger their own alerts when they get aggressive on a single piece (e.g. the 124060 example above: WatchBox at $10,050 vs the $13,988 cross-platform median).
 
 **Practical takeaway**: monitor 15-30 refs (not 3-5) to catch the 1-2 weekly cross-platform spreads on US/UK dealer sites. Chrono24 will dominate alert volume by design — that's where the inefficiency is. The dealer-site signals are rarer but typically larger when they fire.
 
@@ -285,9 +304,9 @@ That's the **mathematically expected** behavior — and it's actually the value 
 - **Bobs Watches search endpoint fix**: switched from stale `/{brand}-{model}-{page}.html` catalog URLs to `/shop?query=REF` (the actual search endpoint exposed by their homepage form). Cloudflare interstitial timeout extended to 45s.
 - **Ref filter regression fix**: brand-grid platforms (European Watch Co, Watchfinder, WoS) now match BASE prefix (`5711/1A`) instead of full sub-variant (`5711/1A-010`) so legitimate cards aren't stripped. Aggregator's `extractSubRef` then groups detected sub-variants for accurate median.
 - **Honest pricing in alerts**: every Telegram message now includes `_Asking price excl. shipping, taxes, customs (varies by buyer location)._` to match what the user sees if they click through to the dealer page.
-- **Platform names in Telegram**: alerts now show `WatchBox / The 1916 Company` (not the raw `watchbox` enum). Same for all 6 sources.
-- **Honest dispatcher reporting**: `email_sent` no longer reports `true` after a silent failure. (Bug D — was masking a real problem.)
-- **Email dropped from MVP** (returning v0.2): Apify's `Actor.call('apify/send-mail')` requires `FULL_PERMISSIONS` scope which the sandboxed runtime token doesn't get for public Actors. Rather than ship a feature that fails silently for end users, email is hidden from the input form. v0.2 will integrate Resend / MailerSend HTTP API directly. Telegram alerts work end-to-end today.
+- **Platform names in Telegram**: alerts now show `WatchBox / The 1916 Company` (not the raw `watchbox` enum). Same for every monitored source.
+- **Email alerts restored**: `alert_channel` now supports `email` and `both` when the Actor runs with `FULL_PERMISSIONS`. Email uses Apify's `apify/send-mail` Actor and sends one digest per run.
+- **Honest dispatcher reporting**: `email_sent` only reports `true` after the email digest is sent successfully.
 
 ## Earlier — build 0.1.17 (2026-05-05)
 
@@ -305,7 +324,7 @@ The Actor only reads publicly-listed prices (no login, no PII). All listings are
 These are the three brands with deep dealer arbitrage — high enough listing volume across multiple platforms to get a meaningful median. We may add Vacheron / Lange / Richard Mille based on demand.
 
 **What if a platform changes its DOM?**
-Each crawler degrades gracefully — a broken selector logs a warning and the run continues with partial data from the other 5 platforms.
+Each crawler degrades gracefully — a broken selector logs a warning and the run continues with partial data from the other selected platforms.
 
 **Can I add more platforms?**
 Open an issue and tag your dealer use case. Adding an additional platform is ~30 min of crawler work using the existing template structure.
@@ -329,15 +348,15 @@ Why these 13? They span the global pre-owned dealer flow that Chrono24-only Chro
 
 ## Use as MCP server (Claude Desktop / Cursor / ChatGPT)
 
-In addition to the batch crawler (above), this Actor doubles as a **Model Context Protocol server** in Apify Standby mode. Connect your AI agent and it can query your live arbitrage feed in plain language: *"Show me the biggest Daytona spreads right now"*, *"What's the median price of a 5711/1A this week?"*
+In addition to the batch crawler (above), this Actor doubles as a **Model Context Protocol server** in Apify Standby mode. Connect your AI agent and it can query your live arbitrage feed in plain language: _"Show me the biggest Daytona spreads right now"_, _"What's the median price of a 5711/1A this week?"_
 
 Three tools are exposed over both REST and MCP JSON-RPC:
 
-| Tool | Purpose |
-|---|---|
+| Tool                     | Purpose                                                                          |
+| ------------------------ | -------------------------------------------------------------------------------- |
 | `get_arbitrage_snapshot` | Top N current arbitrage opportunities, optionally filtered by ref + min spread % |
-| `get_market_stats` | Per-ref median, min, max, count across platforms |
-| `get_listings_by_ref` | Raw listings for a ref, filterable by condition + box/papers, paginated |
+| `get_market_stats`       | Per-ref median, min, max, count across platforms                                 |
+| `get_listings_by_ref`    | Raw listings for a ref, filterable by condition + box/papers, paginated          |
 
 **Data freshness**: results reflect the most recent batch run (you should schedule the batch crawler to run hourly or however often you need fresh data). If the cache is older than 60 minutes, the server returns 503 with Retry-After.
 
@@ -347,12 +366,12 @@ Add to `claude_desktop_config.json`:
 
 ```json
 {
-  "mcpServers": {
-    "watch-arbitrage": {
-      "url": "https://kazkn--watch-arbitrage-mcp.apify.actor/mcp?token=apify_api_YOUR_TOKEN_HERE",
-      "transport": "streamable-http"
+    "mcpServers": {
+        "watch-arbitrage": {
+            "url": "https://kazkn--watch-arbitrage-mcp.apify.actor/mcp?token=apify_api_YOUR_TOKEN_HERE",
+            "transport": "streamable-http"
+        }
     }
-  }
 }
 ```
 
@@ -388,7 +407,7 @@ curl -X POST https://kazkn--watch-arbitrage-mcp.apify.actor/mcp/listings \
 
 MCP queries use the same Pay-Per-Event meter as the batch crawler:
 
-- `get_arbitrage_snapshot` → $0.50 per call (`spread-alert-triggered`) — you only pay when you ask for the value-extracting view
+- `get_arbitrage_snapshot` → $1.50-$2.00 per call (`spread-alert-triggered`) — you only pay when you ask for the value-extracting view
 - `get_market_stats` → free read (no event charge)
 - `get_listings_by_ref` → $0.001 per listing returned (`apify-default-dataset-item`)
 
@@ -412,4 +431,4 @@ Live dashboard with portfolio-wide stats: [kazkn-dashboard.fly.dev](https://kazk
 
 ---
 
-▶ **[Try Watch Arbitrage free on Apify](https://apify.com/kazkn/watch-arbitrage-mcp?fpr=8fp2od)** — start monitoring your first 3-5 references. Real cross-platform spreads land in your Telegram within the hour. $0.50 only when a spread alert fires. No monthly minimum.
+▶ **[Try Watch Arbitrage free on Apify](https://apify.com/kazkn/watch-arbitrage-mcp?fpr=8fp2od)** — start monitoring your first 1-3 precise references. Real cross-platform spreads land in your Telegram within the hour. $1.50-$2.00 when a spread alert fires. No monthly minimum.

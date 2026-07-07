@@ -74,10 +74,11 @@ Per Apify's [GitHub integration guide](https://docs.apify.com/platform/integrati
 
 - **Per-platform crawler files** — every source has its own ~100-line module conforming to the same `Listing` shape, so the aggregator stays platform-agnostic.
 - **Camoufox + Apify proxy rotation** for Cloudflare-protected sources (Chrono24, Bobs).
-- **Sub-reference grouping** — listings are grouped by *extracted* sub-reference (e.g. `5711/1A-010` vs `7011/1G`), not by user search term, to avoid conflating men's vs ladies' sub-models in the median computation.
+- **Sub-reference grouping** — listings are grouped by _extracted_ sub-reference (e.g. `5711/1A-010` vs `7011/1G`), not by user search term, to avoid conflating men's vs ladies' sub-models in the median computation.
 - **Trimmed median** — drops the top/bottom 10% before computing the median, to absorb dealer-listing outliers (e.g. one $3.8M typo or one $200K above-market piece) without skewing the spread baseline.
 - **Dual entry point** — same Docker image runs as a batch crawler under cron, OR as an MCP server in Apify Standby mode (handled by `Actor.config.get('metaOrigin') === 'STANDBY'` in `main.ts`).
 - **Pay-Per-Event monetization** — charges per `actor-start`, per `reference-monitored`, per `apify-default-dataset-item`, and per `spread-alert-triggered` (the primary value event). Spending limit (`ACTOR_MAX_TOTAL_CHARGE_USD`) is honored, so a runaway alert spike never blows past the user's cap.
+- **Run economics guard** — batch runs estimate likely compute cost, live plan pricing, Apify margin, dataset rows, proxy risk, and `ACTOR_MAX_TOTAL_CHARGE_USD` before scraping. Unprofitable dataset-only shapes stop before the expensive crawl.
 
 ## Documentation
 

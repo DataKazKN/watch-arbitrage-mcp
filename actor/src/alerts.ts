@@ -9,8 +9,9 @@
  * (private group flex). Email is the digest fallback for end-of-day summaries.
  */
 import { Actor, log } from 'apify';
-import { COUNTRY_LABEL } from './types.js';
+
 import type { ArbitrageOpportunity, CrossCountrySpread } from './types.js';
+import { COUNTRY_LABEL } from './types.js';
 import { brandLabel, platformLabel } from './utils/brand.js';
 
 const COUNTRY_EMOJI: Record<string, string> = {
@@ -124,10 +125,52 @@ async function sendTelegram(token: string, chatId: string, text: string): Promis
     }
 }
 
-// Email digest removed in 0.1.18 — `Actor.call('apify/send-mail')` requires
-// FULL_PERMISSIONS scope which sandboxed runtime tokens don't get for public
-// actors (returns "Insufficient permissions" silently). Will return in v0.2 via
-// direct HTTP API (Resend / MailerSend) once a verified sender domain is wired.
+function escapeHtml(value: string): string {
+    return value
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function listingLineHtml(op: ArbitrageOpportunity): string {
+    const brand = brandLabel(op.brand);
+    const platform = platformLabel(op.listing.platform);
+    return [
+        `<li>`,
+        `<strong>${escapeHtml(brand)} ${escapeHtml(op.ref)}</strong><br>`,
+        `Asking price: $${op.listing.price_usd.toLocaleString()} on ${escapeHtml(platform)}<br>`,
+        `Cross-platform median: $${op.median_usd.toLocaleString()}<br>`,
+        `Spread: -$${op.spread_usd.toLocaleString()} (${op.spread_pct}% below median)<br>`,
+        op.listing.dealer ? `Dealer: ${escapeHtml(op.listing.dealer)}<br>` : '',
+        op.listing.year ? `Year: ${op.listing.year}<br>` : '',
+        `<a href="${escapeHtml(op.listing.listing_url)}">View listing</a>`,
+        `</li>`,
+    ].join('');
+}
+
+function countrySpreadLineHtml(spread: CrossCountrySpread): string {
+    const brand = brandLabel(spread.brand);
+    const fromLabel = COUNTRY_LABEL[spread.from.country] ?? spread.from.country;
+    const toLabel = COUNTRY_LABEL[spread.to.country] ?? spread.to.country;
+    return [
+        `<li>`,
+        `<strong>${escapeHtml(brand)} ${escapeHtml(spread.ref)}</strong><br>`,
+        `Buy in ${escapeHtml(fromLabel)}: $${spread.from.cheapest_price_usd.toLocaleString()} `,
+        `via ${escapeHtml(platformLabel(spread.from.listing.platform))}<br>`,
+        `Compare against ${escapeHtml(toLabel)}: $${spread.to.cheapest_price_usd.toLocaleString()} `,
+        `via ${escapeHtml(platformLabel(spread.to.listing.platform))}<br>`,
+        `Gap: +$${spread.gap_usd.toLocaleString()} (${spread.gap_pct}%)<br>`,
+        `<a href="${escapeHtml(spread.from.listing.listing_url)}">Buy listing</a> · `,
+        `<a href="${escapeHtml(spread.to.listing.listing_url)}">Comparison listing</a>`,
+        `</li>`,
+    ].join('');
+}
+
+async function sendEmail(to: string, subject: string, html: string): Promise<void> {
+    await Actor.call('apify/send-mail', { to, subject, html });
+}
 
 export async function dispatchAlerts(
     opportunities: ArbitrageOpportunity[],
@@ -135,7 +178,8 @@ export async function dispatchAlerts(
 ): Promise<{ telegram_sent: number; email_sent: boolean; rate_limited: number }> {
     let telegramSent = 0;
     let rateLimited = 0;
-    const emailSent = false;
+    let emailSent = false;
+    const chargedAlertIndexes = new Set<number>();
 
     const fresh: ArbitrageOpportunity[] = [];
     for (const op of opportunities) {
@@ -149,11 +193,12 @@ export async function dispatchAlerts(
 
     // Telegram per-opportunity (respect ACTOR_MAX_TOTAL_CHARGE_USD spending limit)
     if (config.telegramBotToken && config.telegramChatId) {
-        for (const op of fresh) {
+        for (const [index, op] of fresh.entries()) {
             try {
                 await sendTelegram(config.telegramBotToken, config.telegramChatId, formatTelegramMessage(op));
                 await markSent(op.ref);
                 telegramSent += 1;
+                chargedAlertIndexes.add(index);
                 const r = await Actor.charge({ eventName: 'spread-alert-triggered' }).catch(() => null);
                 if (r?.eventChargeLimitReached) {
                     log.warning('User spending limit reached on spread-alert-triggered. Stopping further alerts.');
@@ -162,6 +207,33 @@ export async function dispatchAlerts(
             } catch (err) {
                 log.error(`Telegram send failed for ref=${op.ref}`, { err: String(err) });
             }
+        }
+    }
+
+    if (config.email && fresh.length > 0) {
+        try {
+            await sendEmail(
+                config.email,
+                `Watch arbitrage alert: ${fresh.length} spread${fresh.length === 1 ? '' : 's'} detected`,
+                [
+                    `<h1>Watch arbitrage alert</h1>`,
+                    `<p>${fresh.length} cross-platform spread${fresh.length === 1 ? '' : 's'} crossed your threshold.</p>`,
+                    `<ul>${fresh.map(listingLineHtml).join('')}</ul>`,
+                    `<p><em>Asking prices exclude shipping, taxes, customs, and buyer-location costs.</em></p>`,
+                ].join(''),
+            );
+            emailSent = true;
+            for (const [index, op] of fresh.entries()) {
+                if (chargedAlertIndexes.has(index)) continue;
+                await markSent(op.ref);
+                const r = await Actor.charge({ eventName: 'spread-alert-triggered' }).catch(() => null);
+                if (r?.eventChargeLimitReached) {
+                    log.warning('User spending limit reached on email spread-alert-triggered.');
+                    break;
+                }
+            }
+        } catch (err) {
+            log.error('Email send failed for arbitrage digest', { err: String(err) });
         }
     }
 
@@ -178,9 +250,11 @@ export async function dispatchAlerts(
 export async function dispatchCrossCountryAlerts(
     spreads: CrossCountrySpread[],
     config: AlertConfig,
-): Promise<{ telegram_sent: number; rate_limited: number }> {
+): Promise<{ telegram_sent: number; email_sent: boolean; rate_limited: number }> {
     let telegramSent = 0;
     let rateLimited = 0;
+    let emailSent = false;
+    const chargedAlertIndexes = new Set<number>();
 
     const fresh: CrossCountrySpread[] = [];
     for (const s of spreads) {
@@ -193,11 +267,12 @@ export async function dispatchCrossCountryAlerts(
     }
 
     if (config.telegramBotToken && config.telegramChatId) {
-        for (const s of fresh) {
+        for (const [index, s] of fresh.entries()) {
             try {
                 await sendTelegram(config.telegramBotToken, config.telegramChatId, formatCrossCountryMessage(s));
                 await markSent(s.ref);
                 telegramSent += 1;
+                chargedAlertIndexes.add(index);
                 const r = await Actor.charge({ eventName: 'spread-alert-triggered' }).catch(() => null);
                 if (r?.eventChargeLimitReached) {
                     log.warning('User spending limit reached on spread-alert-triggered. Stopping further alerts.');
@@ -209,5 +284,32 @@ export async function dispatchCrossCountryAlerts(
         }
     }
 
-    return { telegram_sent: telegramSent, rate_limited: rateLimited };
+    if (config.email && fresh.length > 0) {
+        try {
+            await sendEmail(
+                config.email,
+                `Cross-country watch spread: ${fresh.length} alert${fresh.length === 1 ? '' : 's'}`,
+                [
+                    `<h1>Cross-country watch spread</h1>`,
+                    `<p>${fresh.length} country-pair spread${fresh.length === 1 ? '' : 's'} crossed your threshold.</p>`,
+                    `<ul>${fresh.map(countrySpreadLineHtml).join('')}</ul>`,
+                    `<p><em>Gross figures exclude shipping, customs, FX execution, and dealer margin.</em></p>`,
+                ].join(''),
+            );
+            emailSent = true;
+            for (const [index, spread] of fresh.entries()) {
+                if (chargedAlertIndexes.has(index)) continue;
+                await markSent(spread.ref);
+                const r = await Actor.charge({ eventName: 'spread-alert-triggered' }).catch(() => null);
+                if (r?.eventChargeLimitReached) {
+                    log.warning('User spending limit reached on email spread-alert-triggered.');
+                    break;
+                }
+            }
+        } catch (err) {
+            log.error('Email send failed for cross-country digest', { err: String(err) });
+        }
+    }
+
+    return { telegram_sent: telegramSent, email_sent: emailSent, rate_limited: rateLimited };
 }

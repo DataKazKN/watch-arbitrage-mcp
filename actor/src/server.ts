@@ -18,17 +18,19 @@
  * `Authorization: Bearer <token>` or `?token=<token>` matches the runner's
  * APIFY_TOKEN as defense-in-depth.
  *
- * Charging: each MCP query charges `spread-alert-triggered` ($0.50) for
+ * Charging: each MCP query charges `spread-alert-triggered` ($1.50-$2.00,
+ * depending on the caller's Apify plan) for
  * arbitrage queries (the value-extracting event) and
  * `apify-default-dataset-item` ($0.001) per listing returned. Stats queries
  * (cheap aggregate read) only charge actor-start.
  */
+import { setTimeout as sleep } from 'node:timers/promises';
+
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { Actor, log } from 'apify';
 import cors from 'cors';
 import express, { type NextFunction, type Request, type Response } from 'express';
-import { setTimeout as sleep } from 'node:timers/promises';
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { z } from 'zod';
 
 import type { ArbitrageOpportunity, BoxPapersStatus, Listing, RefStats, WatchCondition } from './types.js';
@@ -258,7 +260,7 @@ async function queryListings(args: ListingsQuery): Promise<ListingsResult> {
 }
 
 // --- Charge helpers (best-effort, never throws) ---
-async function safeCharge(eventName: string, count: number = 1): Promise<void> {
+async function safeCharge(eventName: string, count = 1): Promise<void> {
     for (let i = 0; i < count; i++) {
         try {
             await Actor.charge({ eventName });
@@ -296,7 +298,7 @@ function buildMcpServer(): McpServer {
 
     server.tool(
         'get_arbitrage_snapshot',
-        'Returns top N current arbitrage opportunities (listings priced below cross-platform median by ≥ min_spread_pct). Cached from last batch run; freshness depends on schedule. Charges $0.50 per query (spread-alert-triggered).',
+        'Returns top N current arbitrage opportunities (listings priced below cross-platform median by ≥ min_spread_pct). Cached from last batch run; freshness depends on schedule. Charges the live spread-alert-triggered event ($1.50-$2.00 depending on Apify plan).',
         arbitrageSchema.shape,
         async (args) => {
             const result = await queryArbitrage(args);
@@ -393,28 +395,30 @@ export async function startStandbyServer(): Promise<void> {
     });
 
     // --- MCP JSON-RPC endpoint (Streamable HTTP) ---
-    const mcpHandler: express.RequestHandler = async (req, res) => {
-        try {
-            const server = buildMcpServer();
-            const transport = new StreamableHTTPServerTransport({
-                sessionIdGenerator: undefined, // stateless
-            });
-            res.on('close', () => {
-                transport.close().catch(() => undefined);
-                server.close().catch(() => undefined);
-            });
-            await server.connect(transport);
-            await transport.handleRequest(req, res, req.body);
-        } catch (err) {
-            log.exception(err as Error, '[mcp] request failed');
-            if (!res.headersSent) {
-                res.status(500).json({
-                    jsonrpc: '2.0',
-                    error: { code: -32603, message: 'Internal MCP error' },
-                    id: null,
+    const mcpHandler: express.RequestHandler = (req, res) => {
+        void (async () => {
+            try {
+                const server = buildMcpServer();
+                const transport = new StreamableHTTPServerTransport({
+                    sessionIdGenerator: undefined, // stateless
                 });
+                res.on('close', () => {
+                    transport.close().catch(() => undefined);
+                    server.close().catch(() => undefined);
+                });
+                await server.connect(transport);
+                await transport.handleRequest(req, res, req.body);
+            } catch (err) {
+                log.exception(err as Error, '[mcp] request failed');
+                if (!res.headersSent) {
+                    res.status(500).json({
+                        jsonrpc: '2.0',
+                        error: { code: -32603, message: 'Internal MCP error' },
+                        id: null,
+                    });
+                }
             }
-        }
+        })();
     };
     app.post('/mcp', bearerAuth, mcpHandler);
     app.get('/mcp', bearerAuth, mcpHandler);
@@ -438,7 +442,9 @@ export async function startStandbyServer(): Promise<void> {
     });
 
     // Block forever — Apify Standby keeps the process alive.
-    await new Promise<never>(() => undefined);
+    await new Promise<never>(() => {
+        // Apify Standby keeps this process alive until it aborts the run.
+    });
 }
 
 // --- Shared REST error handler ---
